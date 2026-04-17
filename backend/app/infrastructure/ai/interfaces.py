@@ -58,7 +58,7 @@ class LLMService(ABC):
     ) -> LLMResponse: ...
 
     @abstractmethod
-    async def stream(
+    def stream(
         self,
         messages: list[Message],
         temperature: float = 0.2,

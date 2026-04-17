@@ -17,6 +17,7 @@ from app.domain.models import (
     Interaction,
     InteractionAnalysis,
 )
+from app.domain.models.audit import AuditAction
 from app.domain.models.interaction import SentimentLabel, UrgencyLevel
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -131,7 +132,7 @@ class SentimentAgent(BaseAgent):
         # 9. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="sentiment_analysis_created",
+            action=AuditAction.SENTIMENT_ANALYSIS_CREATED,
             actor_id=self.name,
             related_object_id=analysis.analysis_id,
             related_object_type="interaction_analysis",

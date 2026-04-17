@@ -93,12 +93,12 @@ class CapellaLLMService(LLMService):
     ) -> AsyncIterator[str]:
         stream = await self._client.chat.completions.create(
             model=self._settings.capella_model_id,
-            messages=_to_openai_messages(messages),
+            messages=_to_openai_messages(messages),  # type: ignore[arg-type]
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True,
         )
-        async for chunk in stream:
+        async for chunk in stream:  # type: ignore[union-attr]
             delta = chunk.choices[0].delta
             if delta.content:
                 yield delta.content

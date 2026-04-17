@@ -19,6 +19,7 @@ from app.domain.models import (
     FraudStatus,
     Transaction,
 )
+from app.domain.models.audit import AuditAction
 from app.domain.models.fraud import RecommendedAction
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -147,7 +148,7 @@ class FraudAgent(BaseAgent):
         # 8. Emit audit event
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="fraud_alert_created",
+            action=AuditAction.FRAUD_ALERT_CREATED,
             actor_id=self.name,
             related_object_id=alert.alert_id,
             related_object_type="fraud_alert",

@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 
 from app.core.ids import new_audit_id, new_branch_insight_id, new_id, new_session_id
 from app.domain.models import BranchAlert, BranchInsight
+from app.domain.models.audit import AuditAction
 from app.domain.models.branch import BranchAlertSeverity
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -146,7 +147,7 @@ class BranchAgent(BaseAgent):
         # 11. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="branch_insight_created",
+            action=AuditAction.BRANCH_INSIGHT_CREATED,
             actor_id=self.name,
             related_object_id=insight.insight_id,
             related_object_type="branch_insight",
@@ -158,7 +159,7 @@ class BranchAgent(BaseAgent):
 
     def _detect_anomalies(self, kpis: list) -> list[str]:
         """Simple deterministic checks — supplement LLM analysis."""
-        flags = []
+        flags: list[str] = []
         if len(kpis) < 2:
             return flags
         latest = kpis[0]

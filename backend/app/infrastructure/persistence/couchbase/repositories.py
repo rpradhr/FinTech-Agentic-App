@@ -106,7 +106,7 @@ class CouchbaseCustomerRepository(CustomerRepository, _BaseRepo):
     ) -> None:
         profile = await self.get_by_id(customer_id)
         if profile:
-            profile.last_sentiment_status = sentiment_status
+            profile.last_sentiment_status = sentiment_status  # type: ignore[assignment]
             profile.churn_risk_score = churn_risk
             await self.save(profile)
 
@@ -228,7 +228,7 @@ class CouchbaseFraudRepository(FraudRepository, _BaseRepo):
         alert = await self.get_alert_by_id(alert_id)
         if alert is None:
             raise KeyError(f"FraudAlert {alert_id} not found")
-        alert.status = status
+        alert.status = status  # type: ignore[assignment]
         if analyst_id:
             alert.assigned_analyst_id = analyst_id
         if decision:
@@ -294,7 +294,7 @@ class CouchbaseLoanRepository(LoanRepository, _BaseRepo):
         app = await self.get_application_by_id(application_id)
         if app is None:
             raise KeyError(f"LoanApplication {application_id} not found")
-        app.status = status
+        app.status = status  # type: ignore[assignment]
         return await self.save_application(app)
 
     async def get_review_by_application(self, application_id: str) -> LoanReview | None:
@@ -492,7 +492,7 @@ class CouchbaseCaseRepository(CaseRepository, _BaseRepo):
         case = await self.get_by_id(case_id)
         if case is None:
             raise KeyError(f"Case {case_id} not found")
-        case.status = status
+        case.status = status  # type: ignore[assignment]
         return await self.save(case)
 
     async def list_open_cases(self, case_type: str | None = None, limit: int = 50) -> list[Case]:
@@ -544,7 +544,7 @@ class CouchbaseAdvisoryRepository(AdvisoryRepository, _BaseRepo):
         draft = await self.get_draft_by_id(draft_id)
         if draft is None:
             raise KeyError(f"AdviceDraft {draft_id} not found")
-        draft.status = status
+        draft.status = status  # type: ignore[assignment]
         if advisor_edits:
             draft.advisor_edits = advisor_edits
         if status in ("approved", "edited_and_approved"):

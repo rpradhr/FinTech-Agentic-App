@@ -14,6 +14,7 @@ import logging
 from app.core.ids import new_audit_id, new_draft_id, new_session_id
 from app.domain.models import AdviceDraft
 from app.domain.models.advisory import AdviceCategory, AdviceDraftStatus, NextBestAction
+from app.domain.models.audit import AuditAction
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
     AdvisoryRepository,
@@ -165,7 +166,7 @@ class AdvisoryAgent(BaseAgent):
         # 9. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="advice_draft_created",
+            action=AuditAction.ADVICE_DRAFT_CREATED,
             actor_id=self.name,
             related_object_id=draft.draft_id,
             related_object_type="advice_draft",

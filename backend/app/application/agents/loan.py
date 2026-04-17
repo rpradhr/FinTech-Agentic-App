@@ -18,6 +18,7 @@ from app.domain.models import (
     LoanReview,
     LoanStatus,
 )
+from app.domain.models.audit import AuditAction
 from app.domain.models.loan import PolicyExceptionSeverity
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -175,7 +176,7 @@ class LoanAgent(BaseAgent):
         # 12. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="loan_review_created",
+            action=AuditAction.LOAN_REVIEW_CREATED,
             actor_id=self.name,
             related_object_id=review.review_id,
             related_object_type="loan_review",
