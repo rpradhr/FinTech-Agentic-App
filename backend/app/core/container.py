@@ -7,6 +7,7 @@ FastAPI's dependency injection via `Depends(get_container)`.
 All application services and repositories are resolved here — never constructed
 inline in route handlers.
 """
+
 from __future__ import annotations
 
 import logging

@@ -7,10 +7,10 @@ assembles shared customer context, and manages inter-agent handoffs.
 
 Design pattern: supervisor-orchestrated, specialist-agent model (PRD §5).
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from app.application.agents import (
     AdvisoryAgent,
@@ -20,7 +20,7 @@ from app.application.agents import (
     SentimentAgent,
 )
 from app.core.container import Container
-from app.core.ids import new_audit_id, new_session_id
+from app.core.ids import new_session_id
 from app.domain.models import (
     Case,
     CaseType,
@@ -32,7 +32,6 @@ from app.domain.models import (
 )
 from app.domain.models.case import CasePriority, CaseStatus
 from app.domain.models.fraud import FraudRiskLevel
-from app.domain.models.interaction import SentimentLabel
 from app.infrastructure.persistence.interfaces import (
     AuditRepository,
     CaseRepository,
@@ -78,9 +77,7 @@ class Supervisor:
     # Transaction ingestion → Fraud Agent
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def process_transaction(
-        self, txn: Transaction
-    ) -> Optional[FraudAlert]:
+    async def process_transaction(self, txn: Transaction) -> FraudAlert | None:
         """
         Entry point for transaction events.
         Only creates a fraud alert; does NOT take any action autonomously.
@@ -133,9 +130,7 @@ class Supervisor:
     # Loan application → Loan Agent
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def process_loan_application(
-        self, application: LoanApplication
-    ) -> LoanReview:
+    async def process_loan_application(self, application: LoanApplication) -> LoanReview:
         """
         Entry point for loan application submissions.
         Review is created; underwriter must still make the final decision.
@@ -170,9 +165,7 @@ class Supervisor:
     # Advisor workspace open → Advisory Agent
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def generate_advice(
-        self, customer_id: str, advisor_id: Optional[str] = None
-    ):
+    async def generate_advice(self, customer_id: str, advisor_id: str | None = None):
         """
         Entry point when an advisor opens a customer workspace.
         Draft is created; advisor must approve before any delivery.
@@ -191,11 +184,12 @@ class Supervisor:
         self,
         case_type: CaseType,
         title: str,
-        customer_id: Optional[str],
+        customer_id: str | None,
         linked_id: str,
         priority: CasePriority = CasePriority.MEDIUM,
     ) -> Case:
         from app.core.ids import new_case_id
+
         case = Case(
             case_id=new_case_id(),
             case_type=case_type,

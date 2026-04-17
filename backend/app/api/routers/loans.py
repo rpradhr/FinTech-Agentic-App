@@ -1,4 +1,5 @@
 """Loan review workbench API endpoints."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -98,9 +99,7 @@ async def record_loan_decision(
     if review is None:
         raise HTTPException(status_code=404, detail="Review not found")
 
-    valid_decisions = {
-        "approved", "conditionally_approved", "declined", "pending_documents"
-    }
+    valid_decisions = {"approved", "conditionally_approved", "declined", "pending_documents"}
     if body.decision not in valid_decisions:
         raise HTTPException(
             status_code=400,

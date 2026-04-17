@@ -1,14 +1,14 @@
 """Branch operations domain models."""
+
 from __future__ import annotations
 
 from datetime import date, datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class BranchAlertSeverity(str, Enum):
+class BranchAlertSeverity(StrEnum):
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -19,13 +19,13 @@ class BranchKPI(BaseModel):
 
     kpi_id: str
     branch_id: str
-    branch_name: Optional[str] = None
-    region: Optional[str] = None
+    branch_name: str | None = None
+    region: str | None = None
     report_date: date
     report_type: str = "daily"  # daily | intraday
     # Service metrics
-    avg_wait_time_minutes: Optional[float] = None
-    customer_satisfaction_score: Optional[float] = None
+    avg_wait_time_minutes: float | None = None
+    customer_satisfaction_score: float | None = None
     complaint_count: int = 0
     # Sales metrics
     new_accounts_opened: int = 0
@@ -47,10 +47,12 @@ class BranchAlert(BaseModel):
     alert_id: str
     branch_id: str
     severity: BranchAlertSeverity
-    anomaly_type: str  # sales_decline | wait_time_spike | complaint_surge | staffing_gap | fraud_cluster
+    anomaly_type: (
+        str  # sales_decline | wait_time_spike | complaint_surge | staffing_gap | fraud_cluster
+    )
     description: str
-    kpi_snapshot_id: Optional[str] = None
-    period: Optional[str] = None
+    kpi_snapshot_id: str | None = None
+    period: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -67,6 +69,6 @@ class BranchInsight(BaseModel):
     probable_causes: list[str] = Field(default_factory=list)
     ranked_recommendations: list[str] = Field(default_factory=list)
     supporting_signals: dict = Field(default_factory=dict)
-    manager_id: Optional[str] = None
+    manager_id: str | None = None
     manager_review_status: str = "pending"
     created_at: datetime = Field(default_factory=datetime.utcnow)

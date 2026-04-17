@@ -1,8 +1,6 @@
 """Integration tests for the advisory approval workflow."""
-import pytest
 
 from app.domain.models.customer import CustomerProfile
-from app.domain.models.advisory import AdviceDraft, AdviceDraftStatus
 
 
 class TestAdvisoryAPI:
@@ -48,9 +46,7 @@ class TestAdvisoryAPI:
         )
         await container.customers.save(customer)
 
-        response = await async_client.get(
-            "/api/advisory/customers/C-ADV002/recommendations"
-        )
+        response = await async_client.get("/api/advisory/customers/C-ADV002/recommendations")
         assert response.status_code == 200
         draft_id = response.json()["draft_id"]
 

@@ -3,6 +3,7 @@ Structured logging setup using structlog.
 
 Call configure_logging() once at application startup.
 """
+
 from __future__ import annotations
 
 import logging

@@ -5,18 +5,17 @@ Wraps the Couchbase Python SDK cluster + bucket objects and exposes
 collection handles.  All Couchbase-specific SDK calls are confined here and
 in the repository implementations — nothing leaks to application or domain.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
-from functools import cached_property
-from typing import Optional
 
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.collection import Collection
-from couchbase.options import ClusterOptions, ClusterTimeoutOptions
 from couchbase.exceptions import CouchbaseException
+from couchbase.options import ClusterOptions, ClusterTimeoutOptions
 
 from app.core.config import Settings
 
@@ -27,26 +26,26 @@ BUCKET = "banking-core"
 
 COLLECTION_MAP: dict[str, tuple[str, str]] = {
     # (scope, collection)
-    "customers":             ("customers",     "profiles"),
-    "households":            ("customers",     "households"),
-    "customer_signals":      ("customers",     "preferences"),
-    "transactions":          ("transactions",  "ledger_events"),
-    "devices":               ("transactions",  "devices"),
-    "fraud_alerts":          ("agents",        "recommendations"),
-    "fraud_rings":           ("agents",        "case_context"),
-    "loan_applications":     ("loans",         "applications"),
-    "loan_reviews":          ("loans",         "reviews"),
-    "loan_exceptions":       ("loans",         "policy_refs"),
-    "interactions":          ("interactions",  "transcripts"),
-    "interaction_analyses":  ("interactions",  "analysis"),
-    "branch_kpis":           ("branches",      "kpis"),
-    "branch_alerts":         ("branches",      "alerts"),
-    "branch_insights":       ("branches",      "alerts"),
-    "cases":                 ("agents",        "case_context"),
-    "advice_drafts":         ("agents",        "recommendations"),
-    "audit_events":          ("audit",         "events"),
-    "agent_traces":          ("audit",         "events"),
-    "agent_sessions":        ("agents",        "session_state"),
+    "customers": ("customers", "profiles"),
+    "households": ("customers", "households"),
+    "customer_signals": ("customers", "preferences"),
+    "transactions": ("transactions", "ledger_events"),
+    "devices": ("transactions", "devices"),
+    "fraud_alerts": ("agents", "recommendations"),
+    "fraud_rings": ("agents", "case_context"),
+    "loan_applications": ("loans", "applications"),
+    "loan_reviews": ("loans", "reviews"),
+    "loan_exceptions": ("loans", "policy_refs"),
+    "interactions": ("interactions", "transcripts"),
+    "interaction_analyses": ("interactions", "analysis"),
+    "branch_kpis": ("branches", "kpis"),
+    "branch_alerts": ("branches", "alerts"),
+    "branch_insights": ("branches", "alerts"),
+    "cases": ("agents", "case_context"),
+    "advice_drafts": ("agents", "recommendations"),
+    "audit_events": ("audit", "events"),
+    "agent_traces": ("audit", "events"),
+    "agent_sessions": ("agents", "session_state"),
 }
 
 
@@ -60,7 +59,7 @@ class CouchbaseClient:
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._cluster: Optional[Cluster] = None
+        self._cluster: Cluster | None = None
         self._connected = False
 
     async def connect(self) -> None:

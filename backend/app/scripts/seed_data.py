@@ -5,6 +5,7 @@ Usage:
     python -m app.scripts.seed_data           # uses configured backend
     python -m app.scripts.seed_data --dry-run # prints what would be seeded
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -13,22 +14,17 @@ from datetime import date, datetime, timedelta
 
 from app.core.config import get_settings
 from app.core.container import Container
-from app.core.ids import new_id
 from app.domain.models import (
     BranchKPI,
     CustomerProfile,
-    FraudAlert,
     Household,
     Interaction,
     LoanApplication,
     Transaction,
 )
-from app.domain.models.branch import BranchAlertSeverity
 from app.domain.models.customer import KYCStatus, RiskTolerance, SentimentStatus
-from app.domain.models.fraud import FraudRiskLevel, FraudStatus, RecommendedAction
 from app.domain.models.interaction import InteractionSource
 from app.domain.models.transaction import TransactionChannel, TransactionStatus
-
 
 SAMPLE_CUSTOMERS = [
     CustomerProfile(

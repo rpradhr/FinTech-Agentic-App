@@ -4,6 +4,7 @@ Shared in-memory store used by all in-memory repositories.
 All repositories in the same test or dev session share one InMemoryStore instance
 so reads and writes are coherent across repository boundaries.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -32,9 +33,7 @@ class InMemoryStore:
         """Simple equality filter across all items in a collection."""
         results = []
         for item in self._data[collection].values():
-            if all(
-                getattr(item, k, None) == v for k, v in kwargs.items()
-            ):
+            if all(getattr(item, k, None) == v for k, v in kwargs.items()):
                 results.append(item)
         return results
 

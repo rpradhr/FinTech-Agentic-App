@@ -1,7 +1,7 @@
-from .fraud import FraudAgent
-from .sentiment import SentimentAgent
-from .loan import LoanAgent
-from .branch import BranchAgent
 from .advisory import AdvisoryAgent
+from .branch import BranchAgent
+from .fraud import FraudAgent
+from .loan import LoanAgent
+from .sentiment import SentimentAgent
 
 __all__ = ["FraudAgent", "SentimentAgent", "LoanAgent", "BranchAgent", "AdvisoryAgent"]

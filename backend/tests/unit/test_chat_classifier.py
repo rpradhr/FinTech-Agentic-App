@@ -5,14 +5,15 @@ Tests:
 - _keyword_classify: all six intents, entity extraction, ambiguous inputs
 - _classify: LLM success path, malformed JSON fallback, stub-LLM fallback
 """
+
 from __future__ import annotations
 
 import json
+
 import pytest
 
 from app.api.routers.chat import _classify, _keyword_classify
 from app.infrastructure.ai.stub import StubLLMService
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # _keyword_classify — pure synchronous classifier
@@ -139,7 +140,12 @@ class TestKeywordClassify:
         r = _keyword_classify("anything")
         assert "intent" in r
         assert "entities" in r
-        assert set(r["entities"].keys()) == {"customer_id", "branch_id", "application_id", "alert_id"}
+        assert set(r["entities"].keys()) == {
+            "customer_id",
+            "branch_id",
+            "application_id",
+            "alert_id",
+        }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -159,15 +165,17 @@ class TestClassify:
     @pytest.mark.asyncio
     async def test_valid_llm_json_used_directly(self):
         """When LLM returns well-formed JSON, that result is used without keyword override."""
-        good_json = json.dumps({
-            "intent": "advisory",
-            "entities": {
-                "customer_id": "C-LLM001",
-                "branch_id": None,
-                "application_id": None,
-                "alert_id": None,
+        good_json = json.dumps(
+            {
+                "intent": "advisory",
+                "entities": {
+                    "customer_id": "C-LLM001",
+                    "branch_id": None,
+                    "application_id": None,
+                    "alert_id": None,
+                },
             }
-        })
+        )
         llm = StubLLMService(fixed_response=good_json)
         r = await _classify("some user message", llm)
         assert r["intent"] == "advisory"
@@ -176,7 +184,7 @@ class TestClassify:
     @pytest.mark.asyncio
     async def test_llm_json_in_markdown_fences_stripped(self):
         """LLMs sometimes wrap JSON in ```json ... ``` — should still be parsed."""
-        wrapped = "```json\n{\"intent\":\"loan_review\",\"entities\":{\"customer_id\":null,\"branch_id\":null,\"application_id\":\"L-007\",\"alert_id\":null}}\n```"
+        wrapped = '```json\n{"intent":"loan_review","entities":{"customer_id":null,"branch_id":null,"application_id":"L-007","alert_id":null}}\n```'
         llm = StubLLMService(fixed_response=wrapped)
         r = await _classify("loan L-007", llm)
         assert r["intent"] == "loan_review"

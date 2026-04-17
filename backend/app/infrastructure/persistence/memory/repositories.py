@@ -5,10 +5,10 @@ These are the reference / test adapter. They fulfil the same contracts as the
 Couchbase adapter and are used in unit tests and local dev (APP_ENV=development
 with no Couchbase connection string set).
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Optional
 
 from app.domain.models import (
     AdviceDraft,
@@ -45,7 +45,6 @@ from app.infrastructure.persistence.interfaces import (
 
 from .store import InMemoryStore
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Customer
 # ─────────────────────────────────────────────────────────────────────────────
@@ -55,7 +54,7 @@ class InMemoryCustomerRepository(CustomerRepository):
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
 
-    async def get_by_id(self, customer_id: str) -> Optional[CustomerProfile]:
+    async def get_by_id(self, customer_id: str) -> CustomerProfile | None:
         return self._store.get("customers", customer_id)
 
     async def save(self, profile: CustomerProfile) -> CustomerProfile:
@@ -79,7 +78,7 @@ class InMemoryCustomerRepository(CustomerRepository):
         self._store.put("households", household.household_id, household)
         return household
 
-    async def get_customer_signal(self, customer_id: str) -> Optional[CustomerSignal]:
+    async def get_customer_signal(self, customer_id: str) -> CustomerSignal | None:
         return self._store.get("customer_signals", customer_id)
 
     async def save_customer_signal(self, signal: CustomerSignal) -> CustomerSignal:
@@ -97,21 +96,19 @@ class InMemoryTransactionRepository(TransactionRepository):
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
 
-    async def get_by_id(self, txn_id: str) -> Optional[Transaction]:
+    async def get_by_id(self, txn_id: str) -> Transaction | None:
         return self._store.get("transactions", txn_id)
 
     async def save(self, txn: Transaction) -> Transaction:
         self._store.put("transactions", txn.txn_id, txn)
         return txn
 
-    async def get_recent_by_customer(
-        self, customer_id: str, limit: int = 50
-    ) -> list[Transaction]:
+    async def get_recent_by_customer(self, customer_id: str, limit: int = 50) -> list[Transaction]:
         items = self._store.filter("transactions", customer_id=customer_id)
         return sorted(items, key=lambda x: x.event_ts, reverse=True)[:limit]
 
     async def get_by_account(
-        self, account_id: str, since: Optional[datetime] = None, limit: int = 100
+        self, account_id: str, since: datetime | None = None, limit: int = 100
     ) -> list[Transaction]:
         items = self._store.filter("transactions", account_id=account_id)
         if since:
@@ -127,10 +124,11 @@ class InMemoryTransactionRepository(TransactionRepository):
         return sorted(items, key=lambda x: x.event_ts, reverse=True)[:limit]
 
     async def get_flagged_by_branch(
-        self, branch_id: str, since: Optional[datetime] = None
+        self, branch_id: str, since: datetime | None = None
     ) -> list[Transaction]:
         items = [
-            t for t in self._store.all("transactions")
+            t
+            for t in self._store.all("transactions")
             if t.branch_id == branch_id and t.status == "flagged"
         ]
         if since:
@@ -147,7 +145,7 @@ class InMemoryFraudRepository(FraudRepository):
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
 
-    async def get_alert_by_id(self, alert_id: str) -> Optional[FraudAlert]:
+    async def get_alert_by_id(self, alert_id: str) -> FraudAlert | None:
         return self._store.get("fraud_alerts", alert_id)
 
     async def save_alert(self, alert: FraudAlert) -> FraudAlert:
@@ -159,9 +157,9 @@ class InMemoryFraudRepository(FraudRepository):
         self,
         alert_id: str,
         status: str,
-        analyst_id: Optional[str] = None,
-        decision: Optional[str] = None,
-        notes: Optional[str] = None,
+        analyst_id: str | None = None,
+        decision: str | None = None,
+        notes: str | None = None,
     ) -> FraudAlert:
         alert = await self.get_alert_by_id(alert_id)
         if alert is None:
@@ -180,9 +178,7 @@ class InMemoryFraudRepository(FraudRepository):
         items = self._store.filter("fraud_alerts", status="pending_analyst_review")
         return sorted(items, key=lambda x: x.risk_score, reverse=True)[:limit]
 
-    async def get_alerts_by_customer(
-        self, customer_id: str, limit: int = 20
-    ) -> list[FraudAlert]:
+    async def get_alerts_by_customer(self, customer_id: str, limit: int = 20) -> list[FraudAlert]:
         items = self._store.filter("fraud_alerts", customer_id=customer_id)
         return sorted(items, key=lambda x: x.created_at, reverse=True)[:limit]
 
@@ -193,8 +189,8 @@ class InMemoryFraudRepository(FraudRepository):
     async def get_similar_patterns(
         self,
         customer_id: str,
-        device_id: Optional[str],
-        merchant: Optional[str],
+        device_id: str | None,
+        merchant: str | None,
         limit: int = 5,
     ) -> list[FraudAlert]:
         # Simplified: return recent alerts on the same customer
@@ -210,7 +206,7 @@ class InMemoryLoanRepository(LoanRepository):
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
 
-    async def get_application_by_id(self, application_id: str) -> Optional[LoanApplication]:
+    async def get_application_by_id(self, application_id: str) -> LoanApplication | None:
         return self._store.get("loan_applications", application_id)
 
     async def save_application(self, application: LoanApplication) -> LoanApplication:
@@ -218,18 +214,14 @@ class InMemoryLoanRepository(LoanRepository):
         self._store.put("loan_applications", application.application_id, application)
         return application
 
-    async def update_application_status(
-        self, application_id: str, status: str
-    ) -> LoanApplication:
+    async def update_application_status(self, application_id: str, status: str) -> LoanApplication:
         app = await self.get_application_by_id(application_id)
         if app is None:
             raise KeyError(f"LoanApplication {application_id} not found")
         app.status = status
         return await self.save_application(app)
 
-    async def get_review_by_application(
-        self, application_id: str
-    ) -> Optional[LoanReview]:
+    async def get_review_by_application(self, application_id: str) -> LoanReview | None:
         items = self._store.filter("loan_reviews", application_id=application_id)
         return items[0] if items else None
 
@@ -242,7 +234,7 @@ class InMemoryLoanRepository(LoanRepository):
         review_id: str,
         underwriter_id: str,
         decision: str,
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> LoanReview:
         review = self._store.get("loan_reviews", review_id)
         if review is None:
@@ -254,19 +246,14 @@ class InMemoryLoanRepository(LoanRepository):
         return await self.save_review(review)
 
     async def list_pending_reviews(self, limit: int = 50) -> list[LoanReview]:
-        items = [
-            r for r in self._store.all("loan_reviews")
-            if r.underwriter_decision is None
-        ]
+        items = [r for r in self._store.all("loan_reviews") if r.underwriter_decision is None]
         return sorted(items, key=lambda x: x.created_at, reverse=True)[:limit]
 
     async def save_exception(self, exception: LoanException) -> LoanException:
         self._store.put("loan_exceptions", exception.exception_id, exception)
         return exception
 
-    async def get_exceptions_by_application(
-        self, application_id: str
-    ) -> list[LoanException]:
+    async def get_exceptions_by_application(self, application_id: str) -> list[LoanException]:
         return self._store.filter("loan_exceptions", application_id=application_id)
 
 
@@ -283,7 +270,7 @@ class InMemoryInteractionRepository(InteractionRepository):
         self._store.put("interactions", interaction.interaction_id, interaction)
         return interaction
 
-    async def get_interaction_by_id(self, interaction_id: str) -> Optional[Interaction]:
+    async def get_interaction_by_id(self, interaction_id: str) -> Interaction | None:
         return self._store.get("interactions", interaction_id)
 
     async def get_interactions_by_customer(
@@ -296,12 +283,8 @@ class InMemoryInteractionRepository(InteractionRepository):
         self._store.put("interaction_analyses", analysis.analysis_id, analysis)
         return analysis
 
-    async def get_analysis_by_interaction(
-        self, interaction_id: str
-    ) -> Optional[InteractionAnalysis]:
-        items = self._store.filter(
-            "interaction_analyses", interaction_id=interaction_id
-        )
+    async def get_analysis_by_interaction(self, interaction_id: str) -> InteractionAnalysis | None:
+        items = self._store.filter("interaction_analyses", interaction_id=interaction_id)
         return items[0] if items else None
 
     async def get_recent_analyses_by_customer(
@@ -324,9 +307,10 @@ class InMemoryBranchRepository(BranchRepository):
         self._store.put("branch_kpis", kpi.kpi_id, kpi)
         return kpi
 
-    async def get_kpi(self, branch_id: str, report_date: date) -> Optional[BranchKPI]:
+    async def get_kpi(self, branch_id: str, report_date: date) -> BranchKPI | None:
         items = [
-            k for k in self._store.all("branch_kpis")
+            k
+            for k in self._store.all("branch_kpis")
             if k.branch_id == branch_id and k.report_date == report_date
         ]
         return items[0] if items else None
@@ -340,7 +324,7 @@ class InMemoryBranchRepository(BranchRepository):
         return alert
 
     async def list_branch_alerts(
-        self, branch_id: Optional[str] = None, limit: int = 50
+        self, branch_id: str | None = None, limit: int = 50
     ) -> list[BranchAlert]:
         items = self._store.all("branch_alerts")
         if branch_id:
@@ -351,9 +335,7 @@ class InMemoryBranchRepository(BranchRepository):
         self._store.put("branch_insights", insight.insight_id, insight)
         return insight
 
-    async def get_insights_by_branch(
-        self, branch_id: str, limit: int = 10
-    ) -> list[BranchInsight]:
+    async def get_insights_by_branch(self, branch_id: str, limit: int = 10) -> list[BranchInsight]:
         items = self._store.filter("branch_insights", branch_id=branch_id)
         return sorted(items, key=lambda x: x.created_at, reverse=True)[:limit]
 
@@ -376,7 +358,7 @@ class InMemoryCaseRepository(CaseRepository):
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
 
-    async def get_by_id(self, case_id: str) -> Optional[Case]:
+    async def get_by_id(self, case_id: str) -> Case | None:
         return self._store.get("cases", case_id)
 
     async def save(self, case: Case) -> Case:
@@ -391,9 +373,7 @@ class InMemoryCaseRepository(CaseRepository):
         case.status = status
         return await self.save(case)
 
-    async def list_open_cases(
-        self, case_type: Optional[str] = None, limit: int = 50
-    ) -> list[Case]:
+    async def list_open_cases(self, case_type: str | None = None, limit: int = 50) -> list[Case]:
         items = [c for c in self._store.all("cases") if c.status != "closed"]
         if case_type:
             items = [c for c in items if c.case_type == case_type]
@@ -416,14 +396,14 @@ class InMemoryAdvisoryRepository(AdvisoryRepository):
         self._store.put("advice_drafts", draft.draft_id, draft)
         return draft
 
-    async def get_draft_by_id(self, draft_id: str) -> Optional[AdviceDraft]:
+    async def get_draft_by_id(self, draft_id: str) -> AdviceDraft | None:
         return self._store.get("advice_drafts", draft_id)
 
     async def update_draft_status(
         self,
         draft_id: str,
         status: str,
-        advisor_edits: Optional[str] = None,
+        advisor_edits: str | None = None,
     ) -> AdviceDraft:
         draft = await self.get_draft_by_id(draft_id)
         if draft is None:
@@ -435,9 +415,7 @@ class InMemoryAdvisoryRepository(AdvisoryRepository):
             draft.approved_at = datetime.utcnow()
         return await self.save_draft(draft)
 
-    async def get_drafts_by_customer(
-        self, customer_id: str, limit: int = 10
-    ) -> list[AdviceDraft]:
+    async def get_drafts_by_customer(self, customer_id: str, limit: int = 10) -> list[AdviceDraft]:
         items = self._store.filter("advice_drafts", customer_id=customer_id)
         return sorted(items, key=lambda x: x.created_at, reverse=True)[:limit]
 

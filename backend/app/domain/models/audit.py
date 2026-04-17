@@ -1,20 +1,20 @@
 """Audit log domain models — immutable event records for compliance."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class AuditActor(str, Enum):
+class AuditActor(StrEnum):
     HUMAN = "human"
     AGENT = "agent"
     SYSTEM = "system"
 
 
-class AuditAction(str, Enum):
+class AuditAction(StrEnum):
     # Fraud actions
     FRAUD_ALERT_CREATED = "fraud_alert_created"
     FRAUD_ALERT_APPROVED = "fraud_alert_approved"
@@ -55,13 +55,13 @@ class AuditEvent(BaseModel):
     action: AuditAction
     related_object_id: str
     related_object_type: str  # fraud_alert | loan_review | advice_draft | case | etc.
-    customer_id: Optional[str] = None
-    reason_code: Optional[str] = None
-    notes: Optional[str] = None
-    prompt_version: Optional[str] = None  # prompt version used in this action
-    agent_session_id: Optional[str] = None
-    input_summary: Optional[str] = None  # brief summary of agent inputs
-    output_summary: Optional[str] = None  # brief summary of agent outputs
+    customer_id: str | None = None
+    reason_code: str | None = None
+    notes: str | None = None
+    prompt_version: str | None = None  # prompt version used in this action
+    agent_session_id: str | None = None
+    input_summary: str | None = None  # brief summary of agent inputs
+    output_summary: str | None = None  # brief summary of agent outputs
     metadata: dict = Field(default_factory=dict)
     ts: datetime = Field(default_factory=datetime.utcnow)
 
@@ -78,11 +78,11 @@ class AgentTrace(BaseModel):
     agent_name: str
     step_type: str  # user | internal | llm_call | tool_call | tool_result | handoff | assistant
     step_index: int
-    input_data: Optional[dict] = None
-    output_data: Optional[dict] = None
-    tool_name: Optional[str] = None
-    model_id: Optional[str] = None
+    input_data: dict | None = None
+    output_data: dict | None = None
+    tool_name: str | None = None
+    model_id: str | None = None
     prompt_tokens: int = 0
     completion_tokens: int = 0
-    latency_ms: Optional[float] = None
+    latency_ms: float | None = None
     ts: datetime = Field(default_factory=datetime.utcnow)

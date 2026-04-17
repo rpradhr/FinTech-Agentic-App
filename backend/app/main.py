@@ -3,6 +3,7 @@ FastAPI application entry point.
 
 Start with:  uvicorn app.main:app --reload
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,8 +40,8 @@ def create_app() -> FastAPI:
             "loan review, branch monitoring, and financial advisory — all with human-in-the-loop controls."
         ),
         version="0.1.0",
-        docs_url="/docs" if not settings.app_env.value == "production" else None,
-        redoc_url="/redoc" if not settings.app_env.value == "production" else None,
+        docs_url="/docs" if settings.app_env.value != "production" else None,
+        redoc_url="/redoc" if settings.app_env.value != "production" else None,
     )
 
     # ── CORS ──────────────────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ def create_app() -> FastAPI:
     @app.on_event("shutdown")
     async def shutdown():
         from app.core.container import get_container
+
         try:
             container = get_container()
             await container.close()

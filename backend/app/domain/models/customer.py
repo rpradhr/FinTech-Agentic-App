@@ -1,27 +1,27 @@
 """Customer domain models."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class RiskTolerance(str, Enum):
+class RiskTolerance(StrEnum):
     CONSERVATIVE = "conservative"
     MODERATE = "moderate"
     AGGRESSIVE = "aggressive"
 
 
-class KYCStatus(str, Enum):
+class KYCStatus(StrEnum):
     PENDING = "pending"
     VERIFIED = "verified"
     FAILED = "failed"
     EXPIRED = "expired"
 
 
-class SentimentStatus(str, Enum):
+class SentimentStatus(StrEnum):
     POSITIVE = "positive"
     NEUTRAL = "neutral"
     NEGATIVE = "negative"
@@ -44,17 +44,17 @@ class CustomerProfile(BaseModel):
     """Core customer record — the shared context anchor for all agents."""
 
     customer_id: str
-    household_id: Optional[str] = None
+    household_id: str | None = None
     name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
     risk_tolerance: RiskTolerance = RiskTolerance.MODERATE
     products: list[str] = Field(default_factory=list)
     goals: list[str] = Field(default_factory=list)
     kyc_status: KYCStatus = KYCStatus.PENDING
     last_sentiment_status: SentimentStatus = SentimentStatus.UNKNOWN
     churn_risk_score: float = Field(default=0.0, ge=0.0, le=1.0)
-    relationship_manager_id: Optional[str] = None
+    relationship_manager_id: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -67,6 +67,6 @@ class Household(BaseModel):
 
     household_id: str
     member_customer_ids: list[str] = Field(default_factory=list)
-    primary_customer_id: Optional[str] = None
+    primary_customer_id: str | None = None
     total_relationship_value: float = 0.0
     created_at: datetime = Field(default_factory=datetime.utcnow)

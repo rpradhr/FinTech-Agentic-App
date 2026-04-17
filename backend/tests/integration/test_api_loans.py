@@ -1,7 +1,6 @@
 """Integration tests for the loan review workflow."""
-import pytest
 
-from app.domain.models.customer import CustomerProfile, RiskTolerance, KYCStatus
+from app.domain.models.customer import CustomerProfile, KYCStatus
 
 
 class TestLoanAPI:
@@ -27,9 +26,7 @@ class TestLoanAPI:
         assert response.status_code in (200, 202)
 
         # Fetch review
-        review_response = await async_client.get(
-            "/api/loans/applications/L-APITEST001/review"
-        )
+        review_response = await async_client.get("/api/loans/applications/L-APITEST001/review")
         assert review_response.status_code == 200
         review = review_response.json()
         assert "bank_statement" in review["missing_documents"]

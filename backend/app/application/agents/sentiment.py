@@ -5,11 +5,11 @@ Inputs:  Interaction (transcript, email, complaint, survey)
 Outputs: InteractionAnalysis with sentiment, urgency, drivers, churn risk
 Gate:    Optional escalation review (supervisor trigger if churn_risk > threshold)
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Optional
 
 from app.core.ids import new_analysis_id, new_audit_id, new_session_id
 from app.domain.models import (
@@ -25,6 +25,7 @@ from app.infrastructure.persistence.interfaces import (
     InteractionRepository,
     TraceRepository,
 )
+
 from .base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class SentimentAgent(BaseAgent):
         self._customers = customer_repo
 
     async def analyze_interaction(
-        self, interaction: Interaction, session_id: Optional[str] = None
+        self, interaction: Interaction, session_id: str | None = None
     ) -> InteractionAnalysis:
         """
         Analyze a single customer interaction and produce an InteractionAnalysis.
@@ -87,7 +88,7 @@ class SentimentAgent(BaseAgent):
 
         # 2. Retrieve relevant complaint policies
         policy_ctx = await self._retrieve_context(
-            f"customer complaint handling escalation policy",
+            "customer complaint handling escalation policy",
             collection="cx_policies",
         )
 
@@ -125,9 +126,7 @@ class SentimentAgent(BaseAgent):
         await self._interactions.save_analysis(analysis)
 
         # 8. Update aggregated customer signal
-        await self._update_customer_signal(
-            interaction.customer_id, analysis, recent_analyses
-        )
+        await self._update_customer_signal(interaction.customer_id, analysis, recent_analyses)
 
         # 9. Audit
         await self._emit_audit(
@@ -167,9 +166,7 @@ class SentimentAgent(BaseAgent):
             avg_risk = sum(a.churn_risk for a in all_analyses) / len(all_analyses)
             signal.churn_risk = min(avg_risk, 1.0)
             signal.overall_sentiment = new_analysis.sentiment
-            signal.recent_drivers = list(
-                {d for a in all_analyses[:3] for d in a.drivers}
-            )
+            signal.recent_drivers = list({d for a in all_analyses[:3] for d in a.drivers})
         signal.suppress_cross_sell = signal.churn_risk > CHURN_RISK_ESCALATION_THRESHOLD
         await self._customers.save_customer_signal(signal)
         # Also update the customer profile's top-level sentiment
@@ -179,7 +176,7 @@ class SentimentAgent(BaseAgent):
 
     def _build_prompt(self, interaction, customer, recent_analyses, policy_ctx) -> str:
         parts = [
-            f"## Interaction to Analyze",
+            "## Interaction to Analyze",
             f"- ID: {interaction.interaction_id}",
             f"- Source: {interaction.source}",
             f"- Content:\n\n{interaction.content}\n",

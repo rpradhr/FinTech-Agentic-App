@@ -1,16 +1,16 @@
 # Couchbase / Capella adapter — production persistence implementation.
 from .client import CouchbaseClient
 from .repositories import (
-    CouchbaseCustomerRepository,
-    CouchbaseTransactionRepository,
-    CouchbaseFraudRepository,
-    CouchbaseLoanRepository,
-    CouchbaseInteractionRepository,
-    CouchbaseBranchRepository,
-    CouchbaseCaseRepository,
     CouchbaseAdvisoryRepository,
     CouchbaseAuditRepository,
+    CouchbaseBranchRepository,
+    CouchbaseCaseRepository,
+    CouchbaseCustomerRepository,
+    CouchbaseFraudRepository,
+    CouchbaseInteractionRepository,
+    CouchbaseLoanRepository,
     CouchbaseTraceRepository,
+    CouchbaseTransactionRepository,
 )
 
 __all__ = [

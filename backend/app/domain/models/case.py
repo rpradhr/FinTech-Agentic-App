@@ -1,14 +1,14 @@
 """Case management domain models."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class CaseType(str, Enum):
+class CaseType(StrEnum):
     FRAUD = "fraud"
     COMPLAINT = "complaint"
     LOAN_REVIEW = "loan_review"
@@ -16,7 +16,7 @@ class CaseType(str, Enum):
     BRANCH = "branch"
 
 
-class CaseStatus(str, Enum):
+class CaseStatus(StrEnum):
     OPEN = "open"
     PENDING_REVIEW = "pending_review"
     UNDER_INVESTIGATION = "under_investigation"
@@ -26,7 +26,7 @@ class CaseStatus(str, Enum):
     CLOSED = "closed"
 
 
-class CasePriority(str, Enum):
+class CasePriority(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -38,7 +38,7 @@ class CaseEvent(BaseModel):
 
     event_id: str
     event_type: str  # created | updated | assigned | approved | escalated | closed
-    actor_id: Optional[str] = None
+    actor_id: str | None = None
     actor_type: str = "system"  # system | human
     description: str
     metadata: dict = Field(default_factory=dict)
@@ -53,17 +53,17 @@ class Case(BaseModel):
     status: CaseStatus = CaseStatus.OPEN
     priority: CasePriority = CasePriority.MEDIUM
     title: str
-    description: Optional[str] = None
-    customer_id: Optional[str] = None
-    branch_id: Optional[str] = None
-    assigned_to_id: Optional[str] = None
+    description: str | None = None
+    customer_id: str | None = None
+    branch_id: str | None = None
+    assigned_to_id: str | None = None
     linked_entity_ids: list[str] = Field(default_factory=list)  # alert/application/review IDs
     linked_entity_types: list[str] = Field(default_factory=list)
     timeline: list[CaseEvent] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
     class Config:
         use_enum_values = True
