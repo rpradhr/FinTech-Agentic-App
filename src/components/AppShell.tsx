@@ -100,8 +100,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <main className="mx-auto w-full max-w-[1600px] px-4 py-8 md:px-6">{children}</main>
 
-          <footer className="mx-auto w-full max-w-[1600px] px-6 pb-10 pt-4 text-xs text-on-surface-variant">
-            Human-in-the-loop required for all consequential agent actions · Full audit trail enforced
+          <footer className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-2 px-6 pb-10 pt-4 text-xs text-on-surface-variant">
+            <span>
+              Human-in-the-loop required for all consequential agent actions · Full audit trail
+              enforced
+            </span>
+            <span className="rounded-full border border-outline-variant bg-surface-container px-2 py-0.5 font-mono text-[10px] tracking-wide">
+              build: rpradhr/FinTech-Agentic-App
+            </span>
           </footer>
         </div>
       </div>
