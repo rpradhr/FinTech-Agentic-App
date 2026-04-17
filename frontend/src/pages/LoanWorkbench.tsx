@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, Link } from "react-router-dom";
 import { getLoanReview, submitLoanDecision } from "@/services/api";
 import StatusBadge from "@/components/StatusBadge";
 

@@ -50,6 +50,7 @@ export interface AdviceDraft {
   next_best_actions: NextBestAction[];
   customer_context_summary: string;
   goals_summary: string;
+  product_gaps?: string[];
   service_sentiment_note: string | null;
   suppress_cross_sell: boolean;
   full_advice_text: string;
