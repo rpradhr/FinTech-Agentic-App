@@ -1,4 +1,5 @@
 """Dev-only auth endpoints for obtaining test tokens."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException

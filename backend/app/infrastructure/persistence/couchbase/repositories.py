@@ -4,15 +4,15 @@ Couchbase implementations of all repository interfaces.
 All Couchbase SDK calls are contained here and in client.py.
 Only standard Python and domain model types cross the module boundary.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from datetime import date, datetime
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from couchbase.exceptions import DocumentNotFoundException
-from couchbase.options import GetOptions, UpsertOptions
 
 from app.domain.models import (
     AdviceDraft,
@@ -64,7 +64,7 @@ class _BaseRepo:
     def __init__(self, client: CouchbaseClient) -> None:
         self._client = client
 
-    async def _get(self, collection_name: str, key: str) -> Optional[dict]:
+    async def _get(self, collection_name: str, key: str) -> dict | None:
         col = self._client.get_collection(collection_name)
         try:
             result = await _run_sync(col.get, key)
@@ -92,7 +92,7 @@ class _BaseRepo:
 
 
 class CouchbaseCustomerRepository(CustomerRepository, _BaseRepo):
-    async def get_by_id(self, customer_id: str) -> Optional[CustomerProfile]:
+    async def get_by_id(self, customer_id: str) -> CustomerProfile | None:
         doc = await self._get("customers", customer_id)
         return CustomerProfile(**doc) if doc else None
 
@@ -106,7 +106,7 @@ class CouchbaseCustomerRepository(CustomerRepository, _BaseRepo):
     ) -> None:
         profile = await self.get_by_id(customer_id)
         if profile:
-            profile.last_sentiment_status = sentiment_status
+            profile.last_sentiment_status = sentiment_status  # type: ignore[assignment]
             profile.churn_risk_score = churn_risk
             await self.save(profile)
 
@@ -119,20 +119,16 @@ class CouchbaseCustomerRepository(CustomerRepository, _BaseRepo):
         return [CustomerProfile(**r) for r in rows]
 
     async def save_household(self, household: Household) -> Household:
-        await self._upsert(
-            "households", household.household_id, household.model_dump(mode="json")
-        )
+        await self._upsert("households", household.household_id, household.model_dump(mode="json"))
         return household
 
-    async def get_customer_signal(self, customer_id: str) -> Optional[CustomerSignal]:
+    async def get_customer_signal(self, customer_id: str) -> CustomerSignal | None:
         doc = await self._get("customer_signals", customer_id)
         return CustomerSignal(**doc) if doc else None
 
     async def save_customer_signal(self, signal: CustomerSignal) -> CustomerSignal:
         signal.updated_at = datetime.utcnow()
-        await self._upsert(
-            "customer_signals", signal.customer_id, signal.model_dump(mode="json")
-        )
+        await self._upsert("customer_signals", signal.customer_id, signal.model_dump(mode="json"))
         return signal
 
 
@@ -142,7 +138,7 @@ class CouchbaseCustomerRepository(CustomerRepository, _BaseRepo):
 
 
 class CouchbaseTransactionRepository(TransactionRepository, _BaseRepo):
-    async def get_by_id(self, txn_id: str) -> Optional[Transaction]:
+    async def get_by_id(self, txn_id: str) -> Transaction | None:
         doc = await self._get("transactions", txn_id)
         return Transaction(**doc) if doc else None
 
@@ -150,9 +146,7 @@ class CouchbaseTransactionRepository(TransactionRepository, _BaseRepo):
         await self._upsert("transactions", txn.txn_id, txn.model_dump(mode="json"))
         return txn
 
-    async def get_recent_by_customer(
-        self, customer_id: str, limit: int = 50
-    ) -> list[Transaction]:
+    async def get_recent_by_customer(self, customer_id: str, limit: int = 50) -> list[Transaction]:
         rows = await self._query(
             "SELECT t.* FROM `banking-core`.transactions.ledger_events t "
             "WHERE t.customer_id = $cid ORDER BY t.event_ts DESC LIMIT $lim",
@@ -162,11 +156,10 @@ class CouchbaseTransactionRepository(TransactionRepository, _BaseRepo):
         return [Transaction(**r) for r in rows]
 
     async def get_by_account(
-        self, account_id: str, since: Optional[datetime] = None, limit: int = 100
+        self, account_id: str, since: datetime | None = None, limit: int = 100
     ) -> list[Transaction]:
         query = (
-            "SELECT t.* FROM `banking-core`.transactions.ledger_events t "
-            "WHERE t.account_id = $aid"
+            "SELECT t.* FROM `banking-core`.transactions.ledger_events t WHERE t.account_id = $aid"
         )
         params: dict[str, Any] = {"aid": account_id, "lim": limit}
         if since:
@@ -195,7 +188,7 @@ class CouchbaseTransactionRepository(TransactionRepository, _BaseRepo):
         return [Transaction(**r) for r in rows]
 
     async def get_flagged_by_branch(
-        self, branch_id: str, since: Optional[datetime] = None
+        self, branch_id: str, since: datetime | None = None
     ) -> list[Transaction]:
         query = (
             "SELECT t.* FROM `banking-core`.transactions.ledger_events t "
@@ -215,7 +208,7 @@ class CouchbaseTransactionRepository(TransactionRepository, _BaseRepo):
 
 
 class CouchbaseFraudRepository(FraudRepository, _BaseRepo):
-    async def get_alert_by_id(self, alert_id: str) -> Optional[FraudAlert]:
+    async def get_alert_by_id(self, alert_id: str) -> FraudAlert | None:
         doc = await self._get("fraud_alerts", alert_id)
         return FraudAlert(**doc) if doc else None
 
@@ -228,14 +221,14 @@ class CouchbaseFraudRepository(FraudRepository, _BaseRepo):
         self,
         alert_id: str,
         status: str,
-        analyst_id: Optional[str] = None,
-        decision: Optional[str] = None,
-        notes: Optional[str] = None,
+        analyst_id: str | None = None,
+        decision: str | None = None,
+        notes: str | None = None,
     ) -> FraudAlert:
         alert = await self.get_alert_by_id(alert_id)
         if alert is None:
             raise KeyError(f"FraudAlert {alert_id} not found")
-        alert.status = status
+        alert.status = status  # type: ignore[assignment]
         if analyst_id:
             alert.assigned_analyst_id = analyst_id
         if decision:
@@ -253,9 +246,7 @@ class CouchbaseFraudRepository(FraudRepository, _BaseRepo):
         )
         return [FraudAlert(**r) for r in rows]
 
-    async def get_alerts_by_customer(
-        self, customer_id: str, limit: int = 20
-    ) -> list[FraudAlert]:
+    async def get_alerts_by_customer(self, customer_id: str, limit: int = 20) -> list[FraudAlert]:
         rows = await self._query(
             "SELECT f.* FROM `banking-core`.agents.recommendations f "
             "WHERE f.type = 'fraud_alert' AND f.customer_id = $cid "
@@ -266,16 +257,14 @@ class CouchbaseFraudRepository(FraudRepository, _BaseRepo):
         return [FraudAlert(**r) for r in rows]
 
     async def save_ring_cluster(self, cluster: FraudRingCluster) -> FraudRingCluster:
-        await self._upsert(
-            "fraud_rings", cluster.cluster_id, cluster.model_dump(mode="json")
-        )
+        await self._upsert("fraud_rings", cluster.cluster_id, cluster.model_dump(mode="json"))
         return cluster
 
     async def get_similar_patterns(
         self,
         customer_id: str,
-        device_id: Optional[str],
-        merchant: Optional[str],
+        device_id: str | None,
+        merchant: str | None,
         limit: int = 5,
     ) -> list[FraudAlert]:
         # Simplified: return recent alerts on the same customer
@@ -288,7 +277,7 @@ class CouchbaseFraudRepository(FraudRepository, _BaseRepo):
 
 
 class CouchbaseLoanRepository(LoanRepository, _BaseRepo):
-    async def get_application_by_id(self, application_id: str) -> Optional[LoanApplication]:
+    async def get_application_by_id(self, application_id: str) -> LoanApplication | None:
         doc = await self._get("loan_applications", application_id)
         return LoanApplication(**doc) if doc else None
 
@@ -301,21 +290,16 @@ class CouchbaseLoanRepository(LoanRepository, _BaseRepo):
         )
         return application
 
-    async def update_application_status(
-        self, application_id: str, status: str
-    ) -> LoanApplication:
+    async def update_application_status(self, application_id: str, status: str) -> LoanApplication:
         app = await self.get_application_by_id(application_id)
         if app is None:
             raise KeyError(f"LoanApplication {application_id} not found")
-        app.status = status
+        app.status = status  # type: ignore[assignment]
         return await self.save_application(app)
 
-    async def get_review_by_application(
-        self, application_id: str
-    ) -> Optional[LoanReview]:
+    async def get_review_by_application(self, application_id: str) -> LoanReview | None:
         rows = await self._query(
-            "SELECT r.* FROM `banking-core`.loans.reviews r "
-            "WHERE r.application_id = $aid LIMIT 1",
+            "SELECT r.* FROM `banking-core`.loans.reviews r WHERE r.application_id = $aid LIMIT 1",
             aid=application_id,
         )
         return LoanReview(**rows[0]) if rows else None
@@ -329,7 +313,7 @@ class CouchbaseLoanRepository(LoanRepository, _BaseRepo):
         review_id: str,
         underwriter_id: str,
         decision: str,
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> LoanReview:
         review = self._client.get_collection("loan_reviews").get(review_id).content_as[dict]
         review_obj = LoanReview(**review)
@@ -354,12 +338,9 @@ class CouchbaseLoanRepository(LoanRepository, _BaseRepo):
         )
         return exception
 
-    async def get_exceptions_by_application(
-        self, application_id: str
-    ) -> list[LoanException]:
+    async def get_exceptions_by_application(self, application_id: str) -> list[LoanException]:
         rows = await self._query(
-            "SELECT e.* FROM `banking-core`.loans.policy_refs e "
-            "WHERE e.application_id = $aid",
+            "SELECT e.* FROM `banking-core`.loans.policy_refs e WHERE e.application_id = $aid",
             aid=application_id,
         )
         return [LoanException(**r) for r in rows]
@@ -377,7 +358,7 @@ class CouchbaseInteractionRepository(InteractionRepository, _BaseRepo):
         )
         return interaction
 
-    async def get_interaction_by_id(self, interaction_id: str) -> Optional[Interaction]:
+    async def get_interaction_by_id(self, interaction_id: str) -> Interaction | None:
         doc = await self._get("interactions", interaction_id)
         return Interaction(**doc) if doc else None
 
@@ -398,9 +379,7 @@ class CouchbaseInteractionRepository(InteractionRepository, _BaseRepo):
         )
         return analysis
 
-    async def get_analysis_by_interaction(
-        self, interaction_id: str
-    ) -> Optional[InteractionAnalysis]:
+    async def get_analysis_by_interaction(self, interaction_id: str) -> InteractionAnalysis | None:
         rows = await self._query(
             "SELECT a.* FROM `banking-core`.interactions.analysis a "
             "WHERE a.interaction_id = $iid LIMIT 1",
@@ -430,7 +409,7 @@ class CouchbaseBranchRepository(BranchRepository, _BaseRepo):
         await self._upsert("branch_kpis", kpi.kpi_id, kpi.model_dump(mode="json"))
         return kpi
 
-    async def get_kpi(self, branch_id: str, report_date: date) -> Optional[BranchKPI]:
+    async def get_kpi(self, branch_id: str, report_date: date) -> BranchKPI | None:
         rows = await self._query(
             "SELECT k.* FROM `banking-core`.branches.kpis k "
             "WHERE k.branch_id = $bid AND k.report_date = $dt LIMIT 1",
@@ -453,7 +432,7 @@ class CouchbaseBranchRepository(BranchRepository, _BaseRepo):
         return alert
 
     async def list_branch_alerts(
-        self, branch_id: Optional[str] = None, limit: int = 50
+        self, branch_id: str | None = None, limit: int = 50
     ) -> list[BranchAlert]:
         if branch_id:
             rows = await self._query(
@@ -474,9 +453,7 @@ class CouchbaseBranchRepository(BranchRepository, _BaseRepo):
         await self._upsert("branch_insights", insight.insight_id, insight.model_dump(mode="json"))
         return insight
 
-    async def get_insights_by_branch(
-        self, branch_id: str, limit: int = 10
-    ) -> list[BranchInsight]:
+    async def get_insights_by_branch(self, branch_id: str, limit: int = 10) -> list[BranchInsight]:
         rows = await self._query(
             "SELECT i.* FROM `banking-core`.branches.alerts i "
             "WHERE i.branch_id = $bid ORDER BY i.created_at DESC LIMIT $lim",
@@ -502,7 +479,7 @@ class CouchbaseBranchRepository(BranchRepository, _BaseRepo):
 
 
 class CouchbaseCaseRepository(CaseRepository, _BaseRepo):
-    async def get_by_id(self, case_id: str) -> Optional[Case]:
+    async def get_by_id(self, case_id: str) -> Case | None:
         doc = await self._get("cases", case_id)
         return Case(**doc) if doc else None
 
@@ -515,12 +492,10 @@ class CouchbaseCaseRepository(CaseRepository, _BaseRepo):
         case = await self.get_by_id(case_id)
         if case is None:
             raise KeyError(f"Case {case_id} not found")
-        case.status = status
+        case.status = status  # type: ignore[assignment]
         return await self.save(case)
 
-    async def list_open_cases(
-        self, case_type: Optional[str] = None, limit: int = 50
-    ) -> list[Case]:
+    async def list_open_cases(self, case_type: str | None = None, limit: int = 50) -> list[Case]:
         if case_type:
             rows = await self._query(
                 "SELECT c.* FROM `banking-core`.agents.case_context c "
@@ -556,7 +531,7 @@ class CouchbaseAdvisoryRepository(AdvisoryRepository, _BaseRepo):
         await self._upsert("advice_drafts", draft.draft_id, draft.model_dump(mode="json"))
         return draft
 
-    async def get_draft_by_id(self, draft_id: str) -> Optional[AdviceDraft]:
+    async def get_draft_by_id(self, draft_id: str) -> AdviceDraft | None:
         doc = await self._get("advice_drafts", draft_id)
         return AdviceDraft(**doc) if doc else None
 
@@ -564,21 +539,19 @@ class CouchbaseAdvisoryRepository(AdvisoryRepository, _BaseRepo):
         self,
         draft_id: str,
         status: str,
-        advisor_edits: Optional[str] = None,
+        advisor_edits: str | None = None,
     ) -> AdviceDraft:
         draft = await self.get_draft_by_id(draft_id)
         if draft is None:
             raise KeyError(f"AdviceDraft {draft_id} not found")
-        draft.status = status
+        draft.status = status  # type: ignore[assignment]
         if advisor_edits:
             draft.advisor_edits = advisor_edits
         if status in ("approved", "edited_and_approved"):
             draft.approved_at = datetime.utcnow()
         return await self.save_draft(draft)
 
-    async def get_drafts_by_customer(
-        self, customer_id: str, limit: int = 10
-    ) -> list[AdviceDraft]:
+    async def get_drafts_by_customer(self, customer_id: str, limit: int = 10) -> list[AdviceDraft]:
         rows = await self._query(
             "SELECT d.* FROM `banking-core`.agents.recommendations d "
             "WHERE d.type = 'advice_draft' AND d.customer_id = $cid "

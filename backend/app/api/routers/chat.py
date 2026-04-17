@@ -7,16 +7,16 @@ POST /api/chat/query
   - Fetches real data from repositories
   - Returns a structured ChatQueryResponse with agent_type, content, and cards
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import re
-from typing import Optional
 
 from fastapi import APIRouter, Depends
 
-from app.api.auth import UserRole, get_current_user, require_roles
+from app.api.auth import get_current_user
 from app.api.schemas import (
     ChatCard,
     ChatQueryRequest,

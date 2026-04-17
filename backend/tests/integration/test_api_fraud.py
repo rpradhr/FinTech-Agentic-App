@@ -4,11 +4,8 @@ Integration tests for the fraud API workflow.
 Uses the in-memory adapter (APP_ENV=test) and the stub LLM.
 Tests the full request → agent → repository → response cycle.
 """
-import pytest
-import pytest_asyncio
-from datetime import datetime
 
-from app.domain.models.customer import CustomerProfile, RiskTolerance, KYCStatus
+from app.domain.models.customer import CustomerProfile, KYCStatus, RiskTolerance
 
 
 class TestFraudAPI:
@@ -49,7 +46,8 @@ class TestFraudAPI:
 
     async def test_approve_alert_creates_audit_trail(self, async_client, container):
         # Seed an alert
-        from app.domain.models.fraud import FraudAlert, FraudRiskLevel, FraudStatus
+        from app.domain.models.fraud import FraudAlert, FraudRiskLevel
+
         alert = FraudAlert(
             alert_id="FRAUD-TESTAPPROVE",
             txn_id="T-X",
@@ -81,6 +79,7 @@ class TestFraudAPI:
 
     async def test_approve_invalid_decision_returns_400(self, async_client, container):
         from app.domain.models.fraud import FraudAlert, FraudRiskLevel
+
         alert = FraudAlert(
             alert_id="FRAUD-BADINPUT",
             txn_id="T-Y",
@@ -91,7 +90,5 @@ class TestFraudAPI:
         await container.fraud.save_alert(alert)
 
         payload = {"analyst_id": "a1", "decision": "invalid_decision"}
-        response = await async_client.post(
-            "/api/fraud/alerts/FRAUD-BADINPUT/approve", json=payload
-        )
+        response = await async_client.post("/api/fraud/alerts/FRAUD-BADINPUT/approve", json=payload)
         assert response.status_code == 400

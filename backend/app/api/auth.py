@@ -4,12 +4,12 @@ Authentication and RBAC utilities.
 In production, tokens are validated against the configured OIDC IdP.
 In development (no OIDC configured), a simple JWT with HS256 is used for testing.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     FRAUD_ANALYST = "fraud_analyst"
     UNDERWRITER = "underwriter"
     BRANCH_MANAGER = "branch_manager"
@@ -37,8 +37,8 @@ class UserRole(str, Enum):
 class CurrentUser(BaseModel):
     user_id: str
     roles: list[UserRole]
-    email: Optional[str] = None
-    name: Optional[str] = None
+    email: str | None = None
+    name: str | None = None
 
 
 def create_dev_token(user_id: str, roles: list[str]) -> str:
@@ -60,7 +60,7 @@ def _decode_token(token: str) -> dict:
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> CurrentUser:
     if credentials is None:
         raise HTTPException(
@@ -77,7 +77,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {exc}",
-        )
+        ) from exc
 
 
 def require_roles(*required_roles: UserRole):

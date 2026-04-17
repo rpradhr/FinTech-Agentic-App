@@ -1,11 +1,11 @@
 """
 Base agent — shared tracing and audit utilities for all specialist agents.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
 
 from app.core.ids import new_trace_id
 from app.domain.models.audit import AgentTrace, AuditAction, AuditActor, AuditEvent
@@ -44,12 +44,11 @@ class BaseAgent:
         messages: list[Message],
         session_id: str,
         step_index: int,
-        tools: Optional[list[dict]] = None,
+        tools: list[dict] | None = None,
         temperature: float = 0.2,
         max_tokens: int = 2048,
     ) -> str:
         """Run LLM completion and record the trace step."""
-        from app.infrastructure.ai.interfaces import LLMResponse
 
         start = datetime.utcnow()
         response = await self._llm.complete(
@@ -63,7 +62,9 @@ class BaseAgent:
             agent_name=self.name,
             step_type="llm_call",
             step_index=step_index,
-            input_data={"messages": [{"role": m.role, "content": m.content[:200]} for m in messages]},
+            input_data={
+                "messages": [{"role": m.role, "content": m.content[:200]} for m in messages]
+            },
             output_data={"content": response.content[:500]},
             model_id=response.model,
             prompt_tokens=response.prompt_tokens,
@@ -80,11 +81,11 @@ class BaseAgent:
         actor_id: str,
         related_object_id: str,
         related_object_type: str,
-        customer_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        input_summary: Optional[str] = None,
-        output_summary: Optional[str] = None,
-        metadata: Optional[dict] = None,
+        customer_id: str | None = None,
+        session_id: str | None = None,
+        input_summary: str | None = None,
+        output_summary: str | None = None,
+        metadata: dict | None = None,
     ) -> None:
         event = AuditEvent(
             event_id=event_id,

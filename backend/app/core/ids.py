@@ -1,8 +1,8 @@
 """ID generation utilities."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 
 def new_id(prefix: str = "") -> str:

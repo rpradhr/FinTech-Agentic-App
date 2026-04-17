@@ -10,14 +10,6 @@ import {
 } from "@/data/mockMetrics";
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-base font-display font-medium text-[#202124] mb-3">
-      {children}
-    </h2>
-  );
-}
-
 function ChartCard({
   title, subtitle, children, className = "",
 }: {
@@ -255,7 +247,7 @@ export default function AdminDashboard() {
 
         <ChartCard title="Loan Review Funnel" subtitle="Current pipeline stage counts">
           <div className="space-y-3 pt-1">
-            {loanFunnel.map((item, i) => (
+            {loanFunnel.map((item) => (
               <div key={item.stage}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-[#5f6368]">{item.stage}</span>

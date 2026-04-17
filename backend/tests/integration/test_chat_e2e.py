@@ -13,11 +13,11 @@ verify:
 
 All tests run against the in-memory backend with the stub LLM.
 """
+
 from __future__ import annotations
 
 from datetime import date
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
@@ -35,7 +35,6 @@ from app.domain.models.interaction import CustomerSignal
 from app.domain.models.loan import LoanApplication, LoanReview
 from app.main import create_app
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
@@ -46,8 +45,14 @@ async def client(container):
     app = create_app()
     token = create_dev_token(
         "e2e-analyst",
-        ["fraud_analyst", "underwriter", "branch_manager",
-         "financial_advisor", "compliance_reviewer", "admin"],
+        [
+            "fraud_analyst",
+            "underwriter",
+            "branch_manager",
+            "financial_advisor",
+            "compliance_reviewer",
+            "admin",
+        ],
     )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -87,37 +92,45 @@ class TestFraudAnalystScenario:
     @pytest_asyncio.fixture(autouse=True)
     async def seed(self, container):
         # Customer
-        await container.customers.save(CustomerProfile(
-            customer_id="C-ASHA001",
-            name="Asha Mehta",
-            kyc_status=KYCStatus.VERIFIED,
-        ))
+        await container.customers.save(
+            CustomerProfile(
+                customer_id="C-ASHA001",
+                name="Asha Mehta",
+                kyc_status=KYCStatus.VERIFIED,
+            )
+        )
         # Fraud alerts
-        await container.fraud.save_alert(FraudAlert(
-            alert_id="FRAUD-E2E001",
-            txn_id="T-E2E001",
-            customer_id="C-ASHA001",
-            risk_score=0.91,
-            risk_level=FraudRiskLevel.CRITICAL,
-            reasons=["velocity_spike", "new_device", "merchant_cluster"],
-            ai_explanation="Three matching risk signals in 24 h window.",
-        ))
-        await container.fraud.save_alert(FraudAlert(
-            alert_id="FRAUD-E2E002",
-            txn_id="T-E2E002",
-            customer_id="C-ASHA001",
-            risk_score=0.73,
-            risk_level=FraudRiskLevel.HIGH,
-            reasons=["geo_anomaly"],
-        ))
+        await container.fraud.save_alert(
+            FraudAlert(
+                alert_id="FRAUD-E2E001",
+                txn_id="T-E2E001",
+                customer_id="C-ASHA001",
+                risk_score=0.91,
+                risk_level=FraudRiskLevel.CRITICAL,
+                reasons=["velocity_spike", "new_device", "merchant_cluster"],
+                ai_explanation="Three matching risk signals in 24 h window.",
+            )
+        )
+        await container.fraud.save_alert(
+            FraudAlert(
+                alert_id="FRAUD-E2E002",
+                txn_id="T-E2E002",
+                customer_id="C-ASHA001",
+                risk_score=0.73,
+                risk_level=FraudRiskLevel.HIGH,
+                reasons=["geo_anomaly"],
+            )
+        )
         # Churn signal
-        await container.customers.save_customer_signal(CustomerSignal(
-            customer_id="C-ASHA001",
-            overall_sentiment="negative",
-            recent_drivers=["fee_dispute"],
-            churn_risk=0.68,
-            suppress_cross_sell=True,
-        ))
+        await container.customers.save_customer_signal(
+            CustomerSignal(
+                customer_id="C-ASHA001",
+                overall_sentiment="negative",
+                recent_drivers=["fee_dispute"],
+                churn_risk=0.68,
+                suppress_cross_sell=True,
+            )
+        )
 
     async def test_turn1_global_fraud_list(self, client, container):
         conv = Conversation(client)
@@ -169,33 +182,39 @@ class TestFraudAnalystScenario:
 class TestLoanUnderwriterScenario:
     @pytest_asyncio.fixture(autouse=True)
     async def seed(self, container):
-        for i, (app_id, doc_status) in enumerate([
-            ("L-201", ["paystub", "bank_statement"]),       # missing: id_doc
-            ("L-202", ["paystub", "id_doc"]),               # missing: bank_statement
-            ("L-203", ["paystub", "id_doc", "bank_statement"]),  # complete
-        ]):
-            await container.loans.save_application(LoanApplication(
-                application_id=app_id,
-                customer_id=f"C-LUW{i:02d}",
-                loan_type="personal",
-                requested_amount=20000.0 + i * 5000,
-                stated_income=80000.0,
-                submitted_docs=doc_status,
-            ))
+        for i, (app_id, doc_status) in enumerate(
+            [
+                ("L-201", ["paystub", "bank_statement"]),  # missing: id_doc
+                ("L-202", ["paystub", "id_doc"]),  # missing: bank_statement
+                ("L-203", ["paystub", "id_doc", "bank_statement"]),  # complete
+            ]
+        ):
+            await container.loans.save_application(
+                LoanApplication(
+                    application_id=app_id,
+                    customer_id=f"C-LUW{i:02d}",
+                    loan_type="personal",
+                    requested_amount=20000.0 + i * 5000,
+                    stated_income=80000.0,
+                    submitted_docs=doc_status,
+                )
+            )
             missing = []
             if "bank_statement" not in doc_status:
                 missing.append("bank_statement")
             if "id_doc" not in doc_status:
                 missing.append("id_doc")
-            await container.loans.save_review(LoanReview(
-                review_id=f"REV-{app_id}",
-                application_id=app_id,
-                customer_id=f"C-LUW{i:02d}",
-                summary=f"Review for {app_id}.",
-                missing_documents=missing,
-                recommended_status="pending_documents" if missing else "conditionally_approved",
-                confidence_score=0.85,
-            ))
+            await container.loans.save_review(
+                LoanReview(
+                    review_id=f"REV-{app_id}",
+                    application_id=app_id,
+                    customer_id=f"C-LUW{i:02d}",
+                    summary=f"Review for {app_id}.",
+                    missing_documents=missing,
+                    recommended_status="pending_documents" if missing else "conditionally_approved",
+                    confidence_score=0.85,
+                )
+            )
 
     async def test_turn1_pending_queue(self, client, container):
         conv = Conversation(client)
@@ -240,30 +259,42 @@ class TestBranchManagerScenario:
     @pytest_asyncio.fixture(autouse=True)
     async def seed(self, container):
         for branch_id, name in [("BR-WEST01", "West Side"), ("BR-EAST01", "East Side")]:
-            await container.branches.save_kpi(BranchKPI(
-                kpi_id=f"KPI-{branch_id}",
-                branch_id=branch_id,
-                branch_name=name,
-                report_date=date.today(),
-                avg_wait_time_minutes=22.0 if "WEST" in branch_id else 12.0,
-                complaint_count=9 if "WEST" in branch_id else 2,
-                new_accounts_opened=5,
-            ))
+            await container.branches.save_kpi(
+                BranchKPI(
+                    kpi_id=f"KPI-{branch_id}",
+                    branch_id=branch_id,
+                    branch_name=name,
+                    report_date=date.today(),
+                    avg_wait_time_minutes=22.0 if "WEST" in branch_id else 12.0,
+                    complaint_count=9 if "WEST" in branch_id else 2,
+                    new_accounts_opened=5,
+                )
+            )
             if "WEST" in branch_id:
-                await container.branches.save_insight(BranchInsight(
-                    insight_id="INS-E2E-WEST",
-                    branch_id=branch_id,
-                    issue_summary="Compound staffing-wait-time-complaint pattern",
-                    probable_causes=["Two agents on medical leave", "No temp coverage arranged"],
-                    ranked_recommendations=["Request temp staff immediately", "Extend teller hours"],
-                ))
-                await container.branches.save_alert(BranchAlert(
-                    alert_id="BALT-E2E-WEST",
-                    branch_id=branch_id,
-                    severity=BranchAlertSeverity.CRITICAL,
-                    anomaly_type="wait_time_spike",
-                    description="Average wait time exceeded 20 minutes for 3 consecutive days.",
-                ))
+                await container.branches.save_insight(
+                    BranchInsight(
+                        insight_id="INS-E2E-WEST",
+                        branch_id=branch_id,
+                        issue_summary="Compound staffing-wait-time-complaint pattern",
+                        probable_causes=[
+                            "Two agents on medical leave",
+                            "No temp coverage arranged",
+                        ],
+                        ranked_recommendations=[
+                            "Request temp staff immediately",
+                            "Extend teller hours",
+                        ],
+                    )
+                )
+                await container.branches.save_alert(
+                    BranchAlert(
+                        alert_id="BALT-E2E-WEST",
+                        branch_id=branch_id,
+                        severity=BranchAlertSeverity.CRITICAL,
+                        anomaly_type="wait_time_spike",
+                        description="Average wait time exceeded 20 minutes for 3 consecutive days.",
+                    )
+                )
 
     async def test_turn1_dashboard_overview(self, client, container):
         conv = Conversation(client)
@@ -314,42 +345,48 @@ class TestBranchManagerScenario:
 class TestAdvisorScenario:
     @pytest_asyncio.fixture(autouse=True)
     async def seed(self, container):
-        await container.customers.save(CustomerProfile(
-            customer_id="C-RAVI001",
-            name="Ravi Sharma",
-            risk_tolerance=RiskTolerance.MODERATE,
-            products=["checking"],
-            goals=["emergency_fund", "retirement"],
-        ))
-        await container.customers.save_customer_signal(CustomerSignal(
-            customer_id="C-RAVI001",
-            overall_sentiment="neutral",
-            churn_risk=0.30,
-            suppress_cross_sell=False,
-        ))
-        await container.advisory.save_draft(AdviceDraft(
-            draft_id="DRAFT-E2E001",
-            customer_id="C-RAVI001",
-            next_best_actions=[
-                NextBestAction(
-                    action_id="NA-E001",
-                    category=AdviceCategory.SAVINGS,
-                    title="Premier Savings Account",
-                    rationale="Customer has no dedicated savings vehicle; surplus of $5k/month.",
-                    evidence=["No savings account in product portfolio"],
-                    priority=1,
-                ),
-                NextBestAction(
-                    action_id="NA-E002",
-                    category=AdviceCategory.INVESTMENT,
-                    title="Retirement Fund Top-Up",
-                    rationale="Goal alignment: retirement is a stated priority.",
-                    priority=2,
-                ),
-            ],
-            suppress_cross_sell=False,
-            status=AdviceDraftStatus.PENDING_ADVISOR_REVIEW,
-        ))
+        await container.customers.save(
+            CustomerProfile(
+                customer_id="C-RAVI001",
+                name="Ravi Sharma",
+                risk_tolerance=RiskTolerance.MODERATE,
+                products=["checking"],
+                goals=["emergency_fund", "retirement"],
+            )
+        )
+        await container.customers.save_customer_signal(
+            CustomerSignal(
+                customer_id="C-RAVI001",
+                overall_sentiment="neutral",
+                churn_risk=0.30,
+                suppress_cross_sell=False,
+            )
+        )
+        await container.advisory.save_draft(
+            AdviceDraft(
+                draft_id="DRAFT-E2E001",
+                customer_id="C-RAVI001",
+                next_best_actions=[
+                    NextBestAction(
+                        action_id="NA-E001",
+                        category=AdviceCategory.SAVINGS,
+                        title="Premier Savings Account",
+                        rationale="Customer has no dedicated savings vehicle; surplus of $5k/month.",
+                        evidence=["No savings account in product portfolio"],
+                        priority=1,
+                    ),
+                    NextBestAction(
+                        action_id="NA-E002",
+                        category=AdviceCategory.INVESTMENT,
+                        title="Retirement Fund Top-Up",
+                        rationale="Goal alignment: retirement is a stated priority.",
+                        priority=2,
+                    ),
+                ],
+                suppress_cross_sell=False,
+                status=AdviceDraftStatus.PENDING_ADVISOR_REVIEW,
+            )
+        )
 
     async def test_turn1_check_sentiment_first(self, client, container):
         conv = Conversation(client)
@@ -401,45 +438,53 @@ class TestAdvisorScenario:
 class TestCrossDomainPivot:
     @pytest_asyncio.fixture(autouse=True)
     async def seed(self, container):
-        await container.customers.save(CustomerProfile(
-            customer_id="C-MULTI001", name="Multi Domain Customer"
-        ))
-        await container.fraud.save_alert(FraudAlert(
-            alert_id="FRAUD-MULTI001",
-            txn_id="T-MULTI001",
-            customer_id="C-MULTI001",
-            risk_score=0.78,
-            risk_level=FraudRiskLevel.HIGH,
-        ))
-        await container.loans.save_application(LoanApplication(
-            application_id="L-301",
-            customer_id="C-MULTI001",
-            loan_type="personal",
-            requested_amount=15000.0,
-            stated_income=70000.0,
-        ))
-        await container.loans.save_review(LoanReview(
-            review_id="REV-301",
-            application_id="L-301",
-            customer_id="C-MULTI001",
-            summary="Pending fraud flag review.",
-            recommended_status="pending_documents",
-            confidence_score=0.72,
-        ))
-        await container.advisory.save_draft(AdviceDraft(
-            draft_id="DRAFT-MULTI001",
-            customer_id="C-MULTI001",
-            next_best_actions=[
-                NextBestAction(
-                    action_id="NA-M001",
-                    category=AdviceCategory.FOLLOW_UP,
-                    title="Resolve fraud flag first",
-                    rationale="Loan application should not proceed until fraud risk is cleared.",
-                    priority=1,
-                )
-            ],
-            status=AdviceDraftStatus.PENDING_ADVISOR_REVIEW,
-        ))
+        await container.customers.save(
+            CustomerProfile(customer_id="C-MULTI001", name="Multi Domain Customer")
+        )
+        await container.fraud.save_alert(
+            FraudAlert(
+                alert_id="FRAUD-MULTI001",
+                txn_id="T-MULTI001",
+                customer_id="C-MULTI001",
+                risk_score=0.78,
+                risk_level=FraudRiskLevel.HIGH,
+            )
+        )
+        await container.loans.save_application(
+            LoanApplication(
+                application_id="L-301",
+                customer_id="C-MULTI001",
+                loan_type="personal",
+                requested_amount=15000.0,
+                stated_income=70000.0,
+            )
+        )
+        await container.loans.save_review(
+            LoanReview(
+                review_id="REV-301",
+                application_id="L-301",
+                customer_id="C-MULTI001",
+                summary="Pending fraud flag review.",
+                recommended_status="pending_documents",
+                confidence_score=0.72,
+            )
+        )
+        await container.advisory.save_draft(
+            AdviceDraft(
+                draft_id="DRAFT-MULTI001",
+                customer_id="C-MULTI001",
+                next_best_actions=[
+                    NextBestAction(
+                        action_id="NA-M001",
+                        category=AdviceCategory.FOLLOW_UP,
+                        title="Resolve fraud flag first",
+                        rationale="Loan application should not proceed until fraud risk is cleared.",
+                        priority=1,
+                    )
+                ],
+                status=AdviceDraftStatus.PENDING_ADVISOR_REVIEW,
+            )
+        )
 
     async def test_pivot_fraud_to_loan(self, client, container):
         conv = Conversation(client)

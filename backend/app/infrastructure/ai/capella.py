@@ -8,15 +8,16 @@ orchestrator catches to apply its deterministic fallback.
 Capella uses an OpenAI-compatible API surface, so the same httpx calls work
 with the OpenAI SDK pointed at the Capella endpoint.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
-import httpx
 from openai import AsyncOpenAI
 
 from app.core.config import Settings
+
 from .interfaces import (
     EmbeddingResponse,
     EmbeddingService,
@@ -55,7 +56,7 @@ class CapellaLLMService(LLMService):
     async def complete(
         self,
         messages: list[Message],
-        tools: Optional[list[dict]] = None,
+        tools: list[dict] | None = None,
         temperature: float = 0.2,
         max_tokens: int = 2048,
     ) -> LLMResponse:
@@ -92,12 +93,12 @@ class CapellaLLMService(LLMService):
     ) -> AsyncIterator[str]:
         stream = await self._client.chat.completions.create(
             model=self._settings.capella_model_id,
-            messages=_to_openai_messages(messages),
+            messages=_to_openai_messages(messages),  # type: ignore[arg-type]
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True,
         )
-        async for chunk in stream:
+        async for chunk in stream:  # type: ignore[union-attr]
             delta = chunk.choices[0].delta
             if delta.content:
                 yield delta.content
@@ -163,7 +164,7 @@ class CapellaRetrievalService(RetrievalService):
         query: str,
         collection: str = "retrieval_chunks",
         top_k: int = 5,
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> list[RetrievalResult]:
         emb_response = await self._embed.embed(query)
         embedding = emb_response.embedding
@@ -193,6 +194,7 @@ class CapellaRetrievalService(RetrievalService):
         try:
             cluster = self._cb.cluster()
             import asyncio
+
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(None, lambda: cluster.query(statement, **params))
             rows = [row for row in result]
@@ -216,7 +218,7 @@ class CapellaRetrievalService(RetrievalService):
         chunk_id: str,
         text: str,
         collection: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         emb_response = await self._embed.embed(text)
         doc = {
@@ -229,5 +231,6 @@ class CapellaRetrievalService(RetrievalService):
         }
         col = self._cb.get_collection("agent_sessions")  # uses knowledge bucket
         import asyncio
+
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, lambda: col.upsert(chunk_id, doc))

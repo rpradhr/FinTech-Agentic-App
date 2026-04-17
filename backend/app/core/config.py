@@ -3,24 +3,23 @@ Application configuration — loaded from environment variables.
 
 Uses pydantic-settings so all values are validated at startup.
 """
+
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
-from typing import Optional
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class AppEnv(str, Enum):
+class AppEnv(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
     STAGING = "staging"
     PRODUCTION = "production"
 
 
-class DatabaseBackend(str, Enum):
+class DatabaseBackend(StrEnum):
     COUCHBASE = "couchbase"
     MEMORY = "memory"
 

@@ -5,15 +5,16 @@ Inputs:  Customer profile, goals, cash flow, holdings, sentiment signal, service
 Outputs: AdviceDraft with next-best actions and explainable advice
 Gate:    Advisor MUST approve before any customer delivery (HUMAN_IN_THE_LOOP P0)
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Optional
 
 from app.core.ids import new_audit_id, new_draft_id, new_session_id
 from app.domain.models import AdviceDraft
 from app.domain.models.advisory import AdviceCategory, AdviceDraftStatus, NextBestAction
+from app.domain.models.audit import AuditAction
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
     AdvisoryRepository,
@@ -24,6 +25,7 @@ from app.infrastructure.persistence.interfaces import (
     LoanRepository,
     TraceRepository,
 )
+
 from .base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,7 @@ class AdvisoryAgent(BaseAgent):
         self._cases = case_repo
 
     async def generate_advice_draft(
-        self, customer_id: str, advisor_id: Optional[str] = None, session_id: Optional[str] = None
+        self, customer_id: str, advisor_id: str | None = None, session_id: str | None = None
     ) -> AdviceDraft:
         """
         Generate an advice draft for a customer. Requires advisor approval before delivery.
@@ -114,8 +116,7 @@ class AdvisoryAgent(BaseAgent):
 
         # 3. Build prompt
         context = self._build_prompt(
-            customer, customer_signal, fraud_alerts, open_cases,
-            customer_loan_reviews, product_ctx
+            customer, customer_signal, fraud_alerts, open_cases, customer_loan_reviews, product_ctx
         )
         messages = [
             Message(role="system", content=ADVISORY_SYSTEM_PROMPT),
@@ -165,7 +166,7 @@ class AdvisoryAgent(BaseAgent):
         # 9. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="advice_draft_created",
+            action=AuditAction.ADVICE_DRAFT_CREATED,
             actor_id=self.name,
             related_object_id=draft.draft_id,
             related_object_type="advice_draft",

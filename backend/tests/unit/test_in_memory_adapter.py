@@ -4,26 +4,21 @@ Adapter contract tests — in-memory implementation.
 These tests verify that InMemory* repositories fulfil the repository interface
 contracts. The same test suite can be replayed against the Couchbase adapter.
 """
+
 import pytest
 import pytest_asyncio
-from datetime import datetime, date
 
-from app.domain.models.customer import CustomerProfile, RiskTolerance
-from app.domain.models.fraud import FraudAlert, FraudRiskLevel, FraudStatus
-from app.domain.models.fraud import RecommendedAction
-from app.domain.models.loan import LoanApplication, LoanReview
-from app.domain.models.audit import AuditEvent, AuditActor, AuditAction
-from app.domain.models.branch import BranchKPI
-from app.domain.models.case import Case, CaseType, CaseStatus
-from app.core.ids import new_audit_id, new_fraud_id
+from app.core.ids import new_audit_id
+from app.domain.models.audit import AuditAction, AuditActor, AuditEvent
+from app.domain.models.case import Case, CaseType
+from app.domain.models.customer import CustomerProfile
+from app.domain.models.fraud import FraudAlert, FraudRiskLevel
 from app.infrastructure.persistence.memory import (
-    InMemoryStore,
+    InMemoryAuditRepository,
+    InMemoryCaseRepository,
     InMemoryCustomerRepository,
     InMemoryFraudRepository,
-    InMemoryLoanRepository,
-    InMemoryAuditRepository,
-    InMemoryBranchRepository,
-    InMemoryCaseRepository,
+    InMemoryStore,
 )
 
 
@@ -36,6 +31,7 @@ def store():
 # CustomerRepository contract
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestInMemoryCustomerRepository:
     @pytest_asyncio.fixture
     async def repo(self, store):
@@ -44,7 +40,7 @@ class TestInMemoryCustomerRepository:
     @pytest.mark.asyncio
     async def test_save_and_get(self, repo):
         profile = CustomerProfile(customer_id="C-001", name="Alice")
-        saved = await repo.save(profile)
+        await repo.save(profile)
         found = await repo.get_by_id("C-001")
         assert found is not None
         assert found.name == "Alice"
@@ -68,6 +64,7 @@ class TestInMemoryCustomerRepository:
 # FraudRepository contract
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestInMemoryFraudRepository:
     @pytest_asyncio.fixture
     async def repo(self, store):
@@ -82,7 +79,7 @@ class TestInMemoryFraudRepository:
             risk_score=0.85,
             risk_level=FraudRiskLevel.HIGH,
         )
-        saved = await repo.save_alert(alert)
+        await repo.save_alert(alert)
         found = await repo.get_alert_by_id("FRAUD-001")
         assert found is not None
         assert found.risk_score == 0.85
@@ -129,6 +126,7 @@ class TestInMemoryFraudRepository:
 # AuditRepository — immutability and reconstruction
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestInMemoryAuditRepository:
     @pytest_asyncio.fixture
     async def repo(self, store):
@@ -153,6 +151,7 @@ class TestInMemoryAuditRepository:
     @pytest.mark.asyncio
     async def test_multiple_events_chronological(self, repo):
         from app.domain.models.audit import AuditAction
+
         for action in [
             AuditAction.FRAUD_ALERT_CREATED,
             AuditAction.FRAUD_ALERT_APPROVED,
@@ -174,6 +173,7 @@ class TestInMemoryAuditRepository:
 # ─────────────────────────────────────────────────────────────────────────────
 # CaseRepository
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestInMemoryCaseRepository:
     @pytest_asyncio.fixture

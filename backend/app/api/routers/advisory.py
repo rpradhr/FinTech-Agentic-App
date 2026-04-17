@@ -1,7 +1,8 @@
 """Financial advisory API endpoints."""
+
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from app.api.auth import UserRole, require_roles
 from app.api.schemas import AdviceApproveRequest, AdviceDraftResponse

@@ -5,11 +5,11 @@ Inputs:  LoanApplication, customer profile, linked documents, fraud signals
 Outputs: LoanReview with missing docs, policy exceptions, recommended status
 Gate:    Underwriter approval required before any decision (HUMAN_IN_THE_LOOP P0)
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Optional
 
 from app.core.ids import new_audit_id, new_review_id, new_session_id
 from app.domain.models import (
@@ -18,6 +18,7 @@ from app.domain.models import (
     LoanReview,
     LoanStatus,
 )
+from app.domain.models.audit import AuditAction
 from app.domain.models.loan import PolicyExceptionSeverity
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -27,6 +28,7 @@ from app.infrastructure.persistence.interfaces import (
     LoanRepository,
     TraceRepository,
 )
+
 from .base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -85,7 +87,7 @@ class LoanAgent(BaseAgent):
         self._fraud = fraud_repo
 
     async def review_application(
-        self, application: LoanApplication, session_id: Optional[str] = None
+        self, application: LoanApplication, session_id: str | None = None
     ) -> LoanReview:
         """
         Review a loan application and produce a LoanReview awaiting underwriter decision.
@@ -95,9 +97,7 @@ class LoanAgent(BaseAgent):
 
         # 1. Gather context
         customer = await self._customers.get_by_id(application.customer_id)
-        fraud_alerts = await self._fraud.get_alerts_by_customer(
-            application.customer_id, limit=5
-        )
+        fraud_alerts = await self._fraud.get_alerts_by_customer(application.customer_id, limit=5)
         customer_signal = await self._customers.get_customer_signal(application.customer_id)
 
         # 2. Deterministic missing-doc check (does not require LLM)
@@ -128,14 +128,13 @@ class LoanAgent(BaseAgent):
         result = self._parse_result(raw_output)
 
         # 7. Merge deterministic missing docs with LLM-detected ones
-        all_missing = list(
-            dict.fromkeys(missing_docs + result.get("missing_documents", []))
-        )
+        all_missing = list(dict.fromkeys(missing_docs + result.get("missing_documents", [])))
 
         # 8. Persist exceptions
         exceptions = []
         for exc_data in result.get("exceptions", []):
             from app.core.ids import new_id
+
             exc = LoanException(
                 exception_id=new_id("EXC-"),
                 application_id=application.application_id,
@@ -177,7 +176,7 @@ class LoanAgent(BaseAgent):
         # 12. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="loan_review_created",
+            action=AuditAction.LOAN_REVIEW_CREATED,
             actor_id=self.name,
             related_object_id=review.review_id,
             related_object_type="loan_review",

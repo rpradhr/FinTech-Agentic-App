@@ -1,21 +1,21 @@
 """Fraud domain models."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class FraudRiskLevel(str, Enum):
+class FraudRiskLevel(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
     @classmethod
-    def from_score(cls, score: float) -> "FraudRiskLevel":
+    def from_score(cls, score: float) -> FraudRiskLevel:
         if score >= 0.90:
             return cls.CRITICAL
         if score >= 0.70:
@@ -25,7 +25,7 @@ class FraudRiskLevel(str, Enum):
         return cls.LOW
 
 
-class FraudStatus(str, Enum):
+class FraudStatus(StrEnum):
     PENDING_ANALYST_REVIEW = "pending_analyst_review"
     UNDER_INVESTIGATION = "under_investigation"
     CONFIRMED_FRAUD = "confirmed_fraud"
@@ -33,7 +33,7 @@ class FraudStatus(str, Enum):
     ESCALATED = "escalated"
 
 
-class RecommendedAction(str, Enum):
+class RecommendedAction(StrEnum):
     MONITOR = "monitor"
     SOFT_BLOCK = "soft_block"
     MANUAL_HOLD_REVIEW = "manual_hold_review"
@@ -46,8 +46,8 @@ class FraudEvidence(BaseModel):
 
     evidence_type: str  # velocity_spike | geo_anomaly | device_mismatch | merchant_cluster | etc.
     description: str
-    linked_entity_id: Optional[str] = None
-    linked_entity_type: Optional[str] = None
+    linked_entity_id: str | None = None
+    linked_entity_type: str | None = None
     confidence: float = Field(ge=0.0, le=1.0)
 
 
@@ -57,24 +57,24 @@ class FraudAlert(BaseModel):
     alert_id: str
     txn_id: str
     customer_id: str
-    account_id: Optional[str] = None
-    household_id: Optional[str] = None
+    account_id: str | None = None
+    household_id: str | None = None
     risk_score: float = Field(ge=0.0, le=1.0)
     risk_level: FraudRiskLevel
     reasons: list[str] = Field(default_factory=list)
     evidence: list[FraudEvidence] = Field(default_factory=list)
     ring_indicators: list[str] = Field(default_factory=list)
     recommended_action: RecommendedAction = RecommendedAction.MANUAL_HOLD_REVIEW
-    ai_explanation: Optional[str] = None
+    ai_explanation: str | None = None
     status: FraudStatus = FraudStatus.PENDING_ANALYST_REVIEW
-    assigned_analyst_id: Optional[str] = None
-    analyst_decision: Optional[str] = None
-    analyst_notes: Optional[str] = None
+    assigned_analyst_id: str | None = None
+    analyst_decision: str | None = None
+    analyst_notes: str | None = None
     related_alert_ids: list[str] = Field(default_factory=list)
-    case_id: Optional[str] = None
+    case_id: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
     class Config:
         use_enum_values = True
@@ -90,5 +90,5 @@ class FraudRingCluster(BaseModel):
     merchant_ids: list[str]
     branch_ids: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
-    summary: Optional[str] = None
+    summary: str | None = None
     detected_at: datetime = Field(default_factory=datetime.utcnow)

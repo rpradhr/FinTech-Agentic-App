@@ -1,14 +1,14 @@
 """Financial advisory domain models."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class AdviceCategory(str, Enum):
+class AdviceCategory(StrEnum):
     SAVINGS = "savings"
     BUDGETING = "budgeting"
     PRODUCT_FIT = "product_fit"
@@ -18,7 +18,7 @@ class AdviceCategory(str, Enum):
     FOLLOW_UP = "follow_up"
 
 
-class AdviceDraftStatus(str, Enum):
+class AdviceDraftStatus(StrEnum):
     DRAFT = "draft"
     PENDING_ADVISOR_REVIEW = "pending_advisor_review"
     APPROVED = "approved"
@@ -33,7 +33,7 @@ class NextBestAction(BaseModel):
     title: str
     rationale: str
     evidence: list[str] = Field(default_factory=list)
-    suggested_script: Optional[str] = None
+    suggested_script: str | None = None
     priority: int = 5  # 1 = highest
     suitability_flags: list[str] = Field(default_factory=list)
 
@@ -46,18 +46,18 @@ class AdviceDraft(BaseModel):
 
     draft_id: str
     customer_id: str
-    advisor_id: Optional[str] = None
+    advisor_id: str | None = None
     next_best_actions: list[NextBestAction] = Field(default_factory=list)
     customer_context_summary: str = ""
     goals_summary: str = ""
     product_gaps: list[str] = Field(default_factory=list)
-    service_sentiment_note: Optional[str] = None
+    service_sentiment_note: str | None = None
     suppress_cross_sell: bool = False
     full_advice_text: str = ""
     status: AdviceDraftStatus = AdviceDraftStatus.DRAFT
-    advisor_edits: Optional[str] = None
-    approved_at: Optional[datetime] = None
-    delivered_at: Optional[datetime] = None
+    advisor_edits: str | None = None
+    approved_at: datetime | None = None
+    delivered_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:

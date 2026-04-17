@@ -2,13 +2,13 @@
 Request/response schemas for all API endpoints.
 Kept separate from domain models — API shape can evolve independently.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Common
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 class ErrorResponse(BaseModel):
     detail: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -46,19 +46,19 @@ class TransactionIngestRequest(BaseModel):
     account_id: str
     amount: float
     currency: str = "USD"
-    merchant: Optional[str] = None
+    merchant: str | None = None
     channel: str
-    device_id: Optional[str] = None
-    geo: Optional[dict] = None
-    branch_id: Optional[str] = None
-    event_ts: Optional[datetime] = None
+    device_id: str | None = None
+    geo: dict | None = None
+    branch_id: str | None = None
+    event_ts: datetime | None = None
     metadata: dict = Field(default_factory=dict)
 
 
 class FraudAlertApproveRequest(BaseModel):
     analyst_id: str
     decision: str  # approved | declined | escalated
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class FraudAlertResponse(BaseModel):
@@ -69,7 +69,7 @@ class FraudAlertResponse(BaseModel):
     risk_level: str
     reasons: list[str]
     recommended_action: str
-    ai_explanation: Optional[str]
+    ai_explanation: str | None
     status: str
     created_at: datetime
 
@@ -80,21 +80,21 @@ class FraudAlertResponse(BaseModel):
 
 
 class LoanApplicationRequest(BaseModel):
-    application_id: Optional[str] = None
+    application_id: str | None = None
     customer_id: str
     loan_type: str
     requested_amount: float
     term_months: int = 60
     stated_income: float
-    stated_employment: Optional[str] = None
-    credit_score: Optional[int] = None
+    stated_employment: str | None = None
+    credit_score: int | None = None
     submitted_docs: list[str] = Field(default_factory=list)
 
 
 class LoanDecisionRequest(BaseModel):
     underwriter_id: str
     decision: str  # approved | conditionally_approved | declined | pending_documents
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class LoanReviewResponse(BaseModel):
@@ -105,8 +105,8 @@ class LoanReviewResponse(BaseModel):
     missing_documents: list[str]
     recommended_status: str
     confidence_score: float
-    ai_explanation: Optional[str]
-    underwriter_decision: Optional[str]
+    ai_explanation: str | None
+    underwriter_decision: str | None
     created_at: datetime
 
 
@@ -116,11 +116,11 @@ class LoanReviewResponse(BaseModel):
 
 
 class InteractionIngestRequest(BaseModel):
-    interaction_id: Optional[str] = None
+    interaction_id: str | None = None
     customer_id: str
     source: str
     content: str
-    branch_id: Optional[str] = None
+    branch_id: str | None = None
     channel_metadata: dict = Field(default_factory=dict)
 
 
@@ -149,9 +149,9 @@ class BranchInsightResponse(BaseModel):
 
 class BranchDashboardEntry(BaseModel):
     branch_id: str
-    branch_name: Optional[str]
+    branch_name: str | None
     report_date: Any
-    avg_wait_time_minutes: Optional[float]
+    avg_wait_time_minutes: float | None
     complaint_count: int
     new_accounts_opened: int
 
@@ -163,17 +163,17 @@ class BranchDashboardEntry(BaseModel):
 
 class AdviceApproveRequest(BaseModel):
     advisor_id: str
-    advisor_edits: Optional[str] = None  # if non-null, status becomes edited_and_approved
+    advisor_edits: str | None = None  # if non-null, status becomes edited_and_approved
 
 
 class AdviceDraftResponse(BaseModel):
     draft_id: str
     customer_id: str
-    advisor_id: Optional[str]
+    advisor_id: str | None
     next_best_actions: list[dict]
     customer_context_summary: str
     goals_summary: str
-    service_sentiment_note: Optional[str]
+    service_sentiment_note: str | None
     suppress_cross_sell: bool
     full_advice_text: str
     status: str
@@ -191,7 +191,7 @@ class CaseResponse(BaseModel):
     status: str
     priority: str
     title: str
-    customer_id: Optional[str]
+    customer_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -208,8 +208,8 @@ class AuditEventResponse(BaseModel):
     action: str
     related_object_id: str
     related_object_type: str
-    customer_id: Optional[str]
-    notes: Optional[str]
+    customer_id: str | None
+    notes: str | None
     ts: datetime
 
 
@@ -221,11 +221,11 @@ class AuditEventResponse(BaseModel):
 class ChatCard(BaseModel):
     type: str  # alert | metric | action | summary | evidence
     title: str
-    value: Optional[str] = None
-    subtitle: Optional[str] = None
-    status: Optional[str] = None
-    items: Optional[list[str]] = None
-    color: Optional[str] = None
+    value: str | None = None
+    subtitle: str | None = None
+    status: str | None = None
+    items: list[str] | None = None
+    color: str | None = None
 
 
 class ChatHistoryMessage(BaseModel):

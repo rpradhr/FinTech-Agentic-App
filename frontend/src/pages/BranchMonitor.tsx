@@ -193,7 +193,7 @@ function BranchInsightPanel({ branchId }: { branchId: string }) {
 
       {/* Insights list */}
       {!isLoading && insights.length > 0 && (
-        <div style={{ divide: "color #f8f9fa" }}>
+        <div>
           {insights.map((insight) => (
             <div
               key={insight.insight_id}

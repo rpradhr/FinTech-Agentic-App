@@ -5,14 +5,13 @@ Inputs:  Transaction, customer profile, device/merchant history, prior alerts
 Outputs: FraudAlert with risk score, evidence, explanation, recommended action
 Gate:    Analyst approval required before any action (HUMAN_IN_THE_LOOP P0)
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
-from typing import Optional
 
-from app.core.ids import new_audit_id, new_fraud_id, new_session_id, new_trace_id
+from app.core.ids import new_audit_id, new_fraud_id, new_session_id
 from app.domain.models import (
     FraudAlert,
     FraudEvidence,
@@ -20,6 +19,7 @@ from app.domain.models import (
     FraudStatus,
     Transaction,
 )
+from app.domain.models.audit import AuditAction
 from app.domain.models.fraud import RecommendedAction
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -29,6 +29,7 @@ from app.infrastructure.persistence.interfaces import (
     TraceRepository,
     TransactionRepository,
 )
+
 from .base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class FraudAgent(BaseAgent):
         self._customers = customer_repo
 
     async def analyze_transaction(
-        self, txn: Transaction, session_id: Optional[str] = None
+        self, txn: Transaction, session_id: str | None = None
     ) -> FraudAlert:
         """
         Analyze a single transaction and produce a FraudAlert.
@@ -90,14 +91,10 @@ class FraudAgent(BaseAgent):
         customer = await self._customers.get_by_id(txn.customer_id)
         recent_txns = await self._transactions.get_recent_by_customer(txn.customer_id, limit=20)
         device_txns = (
-            await self._transactions.get_by_device(txn.device_id, limit=10)
-            if txn.device_id
-            else []
+            await self._transactions.get_by_device(txn.device_id, limit=10) if txn.device_id else []
         )
         merchant_txns = (
-            await self._transactions.get_by_merchant(txn.merchant, limit=10)
-            if txn.merchant
-            else []
+            await self._transactions.get_by_merchant(txn.merchant, limit=10) if txn.merchant else []
         )
         prior_alerts = await self._fraud.get_similar_patterns(
             txn.customer_id, txn.device_id, txn.merchant
@@ -151,7 +148,7 @@ class FraudAgent(BaseAgent):
         # 8. Emit audit event
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="fraud_alert_created",
+            action=AuditAction.FRAUD_ALERT_CREATED,
             actor_id=self.name,
             related_object_id=alert.alert_id,
             related_object_type="fraud_alert",

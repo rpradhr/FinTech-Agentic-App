@@ -3,10 +3,11 @@ Stub AI adapter — used in unit tests and local dev without AI credentials.
 
 Returns deterministic, predictable responses.
 """
+
 from __future__ import annotations
 
 import random
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 from .interfaces import (
     EmbeddingResponse,
@@ -28,7 +29,7 @@ class StubLLMService(LLMService):
     async def complete(
         self,
         messages: list[Message],
-        tools: Optional[list[dict]] = None,
+        tools: list[dict] | None = None,
         temperature: float = 0.2,
         max_tokens: int = 2048,
     ) -> LLMResponse:
@@ -76,7 +77,7 @@ class StubRetrievalService(RetrievalService):
         query: str,
         collection: str = "retrieval_chunks",
         top_k: int = 5,
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> list[RetrievalResult]:
         return []
 
@@ -85,6 +86,6 @@ class StubRetrievalService(RetrievalService):
         chunk_id: str,
         text: str,
         collection: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         pass  # no-op in stub

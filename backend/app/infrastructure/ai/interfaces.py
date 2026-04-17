@@ -3,19 +3,20 @@ AI service interfaces — the contract between agents and inference backends.
 
 Agents import only these ABCs. Capella/OpenAI/stub adapters implement them.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Optional
 
 
 @dataclass
 class Message:
     role: str  # system | user | assistant | tool
     content: str
-    tool_call_id: Optional[str] = None
-    tool_calls: Optional[list[dict]] = None
+    tool_call_id: str | None = None
+    tool_calls: list[dict] | None = None
 
 
 @dataclass
@@ -24,7 +25,7 @@ class LLMResponse:
     model: str
     prompt_tokens: int = 0
     completion_tokens: int = 0
-    tool_calls: Optional[list[dict]] = None
+    tool_calls: list[dict] | None = None
     finish_reason: str = "stop"
 
 
@@ -51,13 +52,13 @@ class LLMService(ABC):
     async def complete(
         self,
         messages: list[Message],
-        tools: Optional[list[dict]] = None,
+        tools: list[dict] | None = None,
         temperature: float = 0.2,
         max_tokens: int = 2048,
     ) -> LLMResponse: ...
 
     @abstractmethod
-    async def stream(
+    def stream(
         self,
         messages: list[Message],
         temperature: float = 0.2,
@@ -84,7 +85,7 @@ class RetrievalService(ABC):
         query: str,
         collection: str,
         top_k: int = 5,
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> list[RetrievalResult]: ...
 
     @abstractmethod
@@ -93,5 +94,5 @@ class RetrievalService(ABC):
         chunk_id: str,
         text: str,
         collection: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> None: ...

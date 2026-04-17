@@ -1,22 +1,23 @@
 """Fraud workbench API endpoints."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.auth import UserRole, get_current_user, require_roles
+from app.api.auth import UserRole, require_roles
 from app.api.schemas import FraudAlertApproveRequest, FraudAlertResponse, TransactionIngestRequest
 from app.application.orchestrator import Supervisor
 from app.core.container import get_container
-from app.core.ids import new_audit_id, new_id
+from app.core.ids import new_audit_id
 from app.domain.models import Transaction
 from app.domain.models.audit import AuditAction, AuditActor, AuditEvent
-from app.domain.models.transaction import TransactionChannel
 
 router = APIRouter(prefix="/api/fraud", tags=["fraud"])
 
 
 def _get_supervisor() -> Supervisor:
     from app.application.orchestrator import build_supervisor
+
     return build_supervisor(get_container())
 
 
@@ -141,7 +142,8 @@ async def approve_fraud_alert(
     alert = await container.fraud.update_alert_status(
         alert_id=alert_id,
         status=(
-            "confirmed_fraud" if body.decision == "approved"
+            "confirmed_fraud"
+            if body.decision == "approved"
             else ("escalated" if body.decision == "escalated" else "cleared")
         ),
         analyst_id=body.analyst_id,
@@ -155,9 +157,13 @@ async def approve_fraud_alert(
             event_id=new_audit_id(),
             actor_type=AuditActor.HUMAN,
             actor_id=body.analyst_id,
-            action=AuditAction.FRAUD_ALERT_APPROVED if body.decision == "approved"
-            else (AuditAction.FRAUD_ALERT_ESCALATED if body.decision == "escalated"
-                  else AuditAction.FRAUD_ALERT_DECLINED),
+            action=AuditAction.FRAUD_ALERT_APPROVED
+            if body.decision == "approved"
+            else (
+                AuditAction.FRAUD_ALERT_ESCALATED
+                if body.decision == "escalated"
+                else AuditAction.FRAUD_ALERT_DECLINED
+            ),
             related_object_id=alert_id,
             related_object_type="fraud_alert",
             customer_id=alert.customer_id,

@@ -1,14 +1,14 @@
 """Transaction domain models."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class TransactionChannel(str, Enum):
+class TransactionChannel(StrEnum):
     CARD_PRESENT = "card_present"
     CARD_NOT_PRESENT = "card_not_present"
     ACH = "ach"
@@ -19,7 +19,7 @@ class TransactionChannel(str, Enum):
     MOBILE = "mobile"
 
 
-class TransactionStatus(str, Enum):
+class TransactionStatus(StrEnum):
     PENDING = "pending"
     CLEARED = "cleared"
     DECLINED = "declined"
@@ -40,13 +40,13 @@ class Transaction(BaseModel):
     account_id: str
     amount: float
     currency: str = "USD"
-    merchant: Optional[str] = None
-    merchant_category: Optional[str] = None
+    merchant: str | None = None
+    merchant_category: str | None = None
     channel: TransactionChannel
-    device_id: Optional[str] = None
-    geo: Optional[GeoLocation] = None
+    device_id: str | None = None
+    geo: GeoLocation | None = None
     status: TransactionStatus = TransactionStatus.PENDING
-    branch_id: Optional[str] = None
+    branch_id: str | None = None
     event_ts: datetime = Field(default_factory=datetime.utcnow)
     metadata: dict = Field(default_factory=dict)
 

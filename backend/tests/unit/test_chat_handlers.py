@@ -8,10 +8,11 @@ external services are required.  Tests cover:
   - Entity routing: customer_id / branch_id / application_id gates
   - Card content accuracy (colors, types, values)
 """
+
 from __future__ import annotations
 
 import os
-import pytest
+
 import pytest_asyncio
 
 os.environ.setdefault("APP_ENV", "test")
@@ -27,13 +28,16 @@ from app.api.routers.chat import (
 )
 from app.core.config import get_settings
 from app.core.container import Container, set_container
-from app.domain.models.advisory import AdviceDraft, AdviceDraftStatus, NextBestAction, AdviceCategory
+from app.domain.models.advisory import (
+    AdviceCategory,
+    AdviceDraft,
+    AdviceDraftStatus,
+    NextBestAction,
+)
 from app.domain.models.branch import BranchAlert, BranchAlertSeverity, BranchInsight, BranchKPI
-from app.domain.models.customer import CustomerProfile, KYCStatus
-from app.domain.models.fraud import FraudAlert, FraudRiskLevel, FraudStatus
+from app.domain.models.fraud import FraudAlert, FraudRiskLevel
 from app.domain.models.interaction import CustomerSignal
 from app.domain.models.loan import LoanApplication, LoanReview
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
@@ -214,7 +218,7 @@ class TestChurnHandler:
         assert len(r.cards) >= 2  # metric + suppression card
         metric = next(c for c in r.cards if c.type == "metric")
         assert "78%" in metric.value
-        assert "#ea4335" == metric.color  # high-risk red
+        assert metric.color == "#ea4335"  # high-risk red
 
     async def test_cross_sell_suppression_card_shown(self, container):
         signal = CustomerSignal(
@@ -387,6 +391,7 @@ class TestBranchHandler:
 
     async def test_dashboard_returns_branch_metrics(self, container):
         from datetime import date
+
         kpi = BranchKPI(
             kpi_id="KPI-H001",
             branch_id="BR-DASH01",

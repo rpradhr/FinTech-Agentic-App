@@ -1,4 +1,5 @@
 """Customer interactions and sentiment API endpoints."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -22,7 +23,6 @@ async def analyze_interaction(
     _user=Depends(require_roles(UserRole.CX_LEAD, UserRole.SERVICE_ACCOUNT, UserRole.ADMIN)),
 ):
     """Ingest a customer interaction and run sentiment analysis."""
-    from datetime import datetime
 
     container = get_container()
     supervisor = build_supervisor(container)
@@ -58,14 +58,11 @@ async def get_customer_signals(
     ),
 ):
     """Return the aggregated customer sentiment signal."""
-    from datetime import datetime
 
     container = get_container()
     signal = await container.customers.get_customer_signal(customer_id)
     if signal is None:
-        raise HTTPException(
-            status_code=404, detail=f"No signal found for customer {customer_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"No signal found for customer {customer_id}")
     return CustomerSignalResponse(
         customer_id=signal.customer_id,
         overall_sentiment=signal.overall_sentiment,

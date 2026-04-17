@@ -9,15 +9,14 @@ Covers:
 - history field forwarded correctly (no crash)
 - Edge cases: empty message, very long message, unknown entities
 """
+
 from __future__ import annotations
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.auth import create_dev_token
 from app.main import create_app
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
@@ -30,8 +29,14 @@ async def client(container):
     app = create_app()
     token = create_dev_token(
         "test-user",
-        ["fraud_analyst", "underwriter", "branch_manager", "financial_advisor",
-         "compliance_reviewer", "admin"],
+        [
+            "fraud_analyst",
+            "underwriter",
+            "branch_manager",
+            "financial_advisor",
+            "compliance_reviewer",
+            "admin",
+        ],
     )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -142,6 +147,7 @@ class TestChatResponseSchema:
 
     async def test_card_schema_when_present(self, client, container):
         from app.domain.models.fraud import FraudAlert, FraudRiskLevel
+
         # Seed an alert so fraud handler has data to return
         alert = FraudAlert(
             alert_id="FRAUD-ROUTER001",
@@ -241,6 +247,7 @@ class TestChatEdgeCases:
     async def test_response_time_reasonable(self, client):
         """The in-memory adapter + stub LLM should respond in well under 2 s."""
         import time
+
         start = time.monotonic()
         r = await client.post("/api/chat/query", json={"message": "fraud alerts"})
         elapsed = time.monotonic() - start
@@ -249,6 +256,7 @@ class TestChatEdgeCases:
 
     async def test_concurrent_requests_all_succeed(self, client):
         import asyncio
+
         msgs = [
             "Show fraud alerts",
             "Churn risk for C-TEST",
@@ -256,9 +264,6 @@ class TestChatEdgeCases:
             "Branch operations",
             "Advisory for C-TEST",
         ]
-        tasks = [
-            client.post("/api/chat/query", json={"message": m})
-            for m in msgs
-        ]
+        tasks = [client.post("/api/chat/query", json={"message": m}) for m in msgs]
         responses = await asyncio.gather(*tasks)
         assert all(r.status_code == 200 for r in responses)

@@ -4,10 +4,10 @@ Agent audit trail and human-gate enforcement tests.
 Verifies the P0 requirement: every AI-generated recommendation,
 human override, and agent session is fully reconstructible.
 """
-import pytest
+
 from httpx import ASGITransport, AsyncClient
 
-from app.domain.models.customer import CustomerProfile, KYCStatus
+from app.domain.models.customer import CustomerProfile
 
 
 class TestAuditTrail:
@@ -17,13 +17,16 @@ class TestAuditTrail:
         await container.customers.save(customer)
 
         # Step 1: Ingest transaction
-        await async_client.post("/api/fraud/events", json={
-            "txn_id": "T-AUDIT001",
-            "customer_id": "C-AUDIT001",
-            "account_id": "A-AUDIT001",
-            "amount": 9999.0,
-            "channel": "online",
-        })
+        await async_client.post(
+            "/api/fraud/events",
+            json={
+                "txn_id": "T-AUDIT001",
+                "customer_id": "C-AUDIT001",
+                "account_id": "A-AUDIT001",
+                "amount": 9999.0,
+                "channel": "online",
+            },
+        )
 
         # Step 2: Get alert list to find the created alert
         alerts_resp = await async_client.get("/api/fraud/alerts")
@@ -36,11 +39,14 @@ class TestAuditTrail:
             alert_id = our_alerts[0]["alert_id"]
 
             # Step 3: Approve
-            await async_client.post(f"/api/fraud/alerts/{alert_id}/approve", json={
-                "analyst_id": "analyst-audit-001",
-                "decision": "declined",
-                "notes": "Cleared after investigation",
-            })
+            await async_client.post(
+                f"/api/fraud/alerts/{alert_id}/approve",
+                json={
+                    "analyst_id": "analyst-audit-001",
+                    "decision": "declined",
+                    "notes": "Cleared after investigation",
+                },
+            )
 
             # Step 4: Reconstruct audit trail
             trail_resp = await async_client.get(f"/api/audit/{alert_id}")

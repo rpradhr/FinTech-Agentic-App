@@ -4,11 +4,11 @@ Repository interfaces — the persistence contract.
 All adapters (Couchbase, in-memory, etc.) MUST implement these ABCs.
 Application and domain layers import ONLY from this module, never from adapters.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import date, datetime
-from typing import Optional
 
 from app.domain.models import (
     AdviceDraft,
@@ -31,7 +31,6 @@ from app.domain.models import (
     Transaction,
 )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Customer
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +38,7 @@ from app.domain.models import (
 
 class CustomerRepository(ABC):
     @abstractmethod
-    async def get_by_id(self, customer_id: str) -> Optional[CustomerProfile]: ...
+    async def get_by_id(self, customer_id: str) -> CustomerProfile | None: ...
 
     @abstractmethod
     async def save(self, profile: CustomerProfile) -> CustomerProfile: ...
@@ -56,7 +55,7 @@ class CustomerRepository(ABC):
     async def save_household(self, household: Household) -> Household: ...
 
     @abstractmethod
-    async def get_customer_signal(self, customer_id: str) -> Optional[CustomerSignal]: ...
+    async def get_customer_signal(self, customer_id: str) -> CustomerSignal | None: ...
 
     @abstractmethod
     async def save_customer_signal(self, signal: CustomerSignal) -> CustomerSignal: ...
@@ -69,7 +68,7 @@ class CustomerRepository(ABC):
 
 class TransactionRepository(ABC):
     @abstractmethod
-    async def get_by_id(self, txn_id: str) -> Optional[Transaction]: ...
+    async def get_by_id(self, txn_id: str) -> Transaction | None: ...
 
     @abstractmethod
     async def save(self, txn: Transaction) -> Transaction: ...
@@ -81,7 +80,7 @@ class TransactionRepository(ABC):
 
     @abstractmethod
     async def get_by_account(
-        self, account_id: str, since: Optional[datetime] = None, limit: int = 100
+        self, account_id: str, since: datetime | None = None, limit: int = 100
     ) -> list[Transaction]: ...
 
     @abstractmethod
@@ -92,7 +91,7 @@ class TransactionRepository(ABC):
 
     @abstractmethod
     async def get_flagged_by_branch(
-        self, branch_id: str, since: Optional[datetime] = None
+        self, branch_id: str, since: datetime | None = None
     ) -> list[Transaction]: ...
 
 
@@ -103,7 +102,7 @@ class TransactionRepository(ABC):
 
 class FraudRepository(ABC):
     @abstractmethod
-    async def get_alert_by_id(self, alert_id: str) -> Optional[FraudAlert]: ...
+    async def get_alert_by_id(self, alert_id: str) -> FraudAlert | None: ...
 
     @abstractmethod
     async def save_alert(self, alert: FraudAlert) -> FraudAlert: ...
@@ -113,9 +112,9 @@ class FraudRepository(ABC):
         self,
         alert_id: str,
         status: str,
-        analyst_id: Optional[str] = None,
-        decision: Optional[str] = None,
-        notes: Optional[str] = None,
+        analyst_id: str | None = None,
+        decision: str | None = None,
+        notes: str | None = None,
     ) -> FraudAlert: ...
 
     @abstractmethod
@@ -131,7 +130,7 @@ class FraudRepository(ABC):
 
     @abstractmethod
     async def get_similar_patterns(
-        self, customer_id: str, device_id: Optional[str], merchant: Optional[str], limit: int = 5
+        self, customer_id: str, device_id: str | None, merchant: str | None, limit: int = 5
     ) -> list[FraudAlert]: ...
 
 
@@ -142,7 +141,7 @@ class FraudRepository(ABC):
 
 class LoanRepository(ABC):
     @abstractmethod
-    async def get_application_by_id(self, application_id: str) -> Optional[LoanApplication]: ...
+    async def get_application_by_id(self, application_id: str) -> LoanApplication | None: ...
 
     @abstractmethod
     async def save_application(self, application: LoanApplication) -> LoanApplication: ...
@@ -153,9 +152,7 @@ class LoanRepository(ABC):
     ) -> LoanApplication: ...
 
     @abstractmethod
-    async def get_review_by_application(
-        self, application_id: str
-    ) -> Optional[LoanReview]: ...
+    async def get_review_by_application(self, application_id: str) -> LoanReview | None: ...
 
     @abstractmethod
     async def save_review(self, review: LoanReview) -> LoanReview: ...
@@ -166,7 +163,7 @@ class LoanRepository(ABC):
         review_id: str,
         underwriter_id: str,
         decision: str,
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> LoanReview: ...
 
     @abstractmethod
@@ -176,9 +173,7 @@ class LoanRepository(ABC):
     async def save_exception(self, exception: LoanException) -> LoanException: ...
 
     @abstractmethod
-    async def get_exceptions_by_application(
-        self, application_id: str
-    ) -> list[LoanException]: ...
+    async def get_exceptions_by_application(self, application_id: str) -> list[LoanException]: ...
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -191,7 +186,7 @@ class InteractionRepository(ABC):
     async def save_interaction(self, interaction: Interaction) -> Interaction: ...
 
     @abstractmethod
-    async def get_interaction_by_id(self, interaction_id: str) -> Optional[Interaction]: ...
+    async def get_interaction_by_id(self, interaction_id: str) -> Interaction | None: ...
 
     @abstractmethod
     async def get_interactions_by_customer(
@@ -204,7 +199,7 @@ class InteractionRepository(ABC):
     @abstractmethod
     async def get_analysis_by_interaction(
         self, interaction_id: str
-    ) -> Optional[InteractionAnalysis]: ...
+    ) -> InteractionAnalysis | None: ...
 
     @abstractmethod
     async def get_recent_analyses_by_customer(
@@ -222,7 +217,7 @@ class BranchRepository(ABC):
     async def save_kpi(self, kpi: BranchKPI) -> BranchKPI: ...
 
     @abstractmethod
-    async def get_kpi(self, branch_id: str, report_date: date) -> Optional[BranchKPI]: ...
+    async def get_kpi(self, branch_id: str, report_date: date) -> BranchKPI | None: ...
 
     @abstractmethod
     async def get_recent_kpis(self, branch_id: str, days: int = 30) -> list[BranchKPI]: ...
@@ -232,7 +227,7 @@ class BranchRepository(ABC):
 
     @abstractmethod
     async def list_branch_alerts(
-        self, branch_id: Optional[str] = None, limit: int = 50
+        self, branch_id: str | None = None, limit: int = 50
     ) -> list[BranchAlert]: ...
 
     @abstractmethod
@@ -254,7 +249,7 @@ class BranchRepository(ABC):
 
 class CaseRepository(ABC):
     @abstractmethod
-    async def get_by_id(self, case_id: str) -> Optional[Case]: ...
+    async def get_by_id(self, case_id: str) -> Case | None: ...
 
     @abstractmethod
     async def save(self, case: Case) -> Case: ...
@@ -263,7 +258,9 @@ class CaseRepository(ABC):
     async def update_status(self, case_id: str, status: str) -> Case: ...
 
     @abstractmethod
-    async def list_open_cases(self, case_type: Optional[str] = None, limit: int = 50) -> list[Case]: ...
+    async def list_open_cases(
+        self, case_type: str | None = None, limit: int = 50
+    ) -> list[Case]: ...
 
     @abstractmethod
     async def get_cases_by_customer(self, customer_id: str) -> list[Case]: ...
@@ -279,14 +276,14 @@ class AdvisoryRepository(ABC):
     async def save_draft(self, draft: AdviceDraft) -> AdviceDraft: ...
 
     @abstractmethod
-    async def get_draft_by_id(self, draft_id: str) -> Optional[AdviceDraft]: ...
+    async def get_draft_by_id(self, draft_id: str) -> AdviceDraft | None: ...
 
     @abstractmethod
     async def update_draft_status(
         self,
         draft_id: str,
         status: str,
-        advisor_edits: Optional[str] = None,
+        advisor_edits: str | None = None,
     ) -> AdviceDraft: ...
 
     @abstractmethod
@@ -308,9 +305,7 @@ class AuditRepository(ABC):
     async def get_by_object(self, object_id: str) -> list[AuditEvent]: ...
 
     @abstractmethod
-    async def get_by_customer(
-        self, customer_id: str, limit: int = 100
-    ) -> list[AuditEvent]: ...
+    async def get_by_customer(self, customer_id: str, limit: int = 100) -> list[AuditEvent]: ...
 
     @abstractmethod
     async def get_by_session(self, session_id: str) -> list[AuditEvent]: ...

@@ -180,9 +180,9 @@ function AdviceDraftPanel({ customerId }: { customerId: string }) {
             </div>
           )}
         </div>
-        {draft.product_gaps?.length > 0 && (
+        {(draft.product_gaps?.length ?? 0) > 0 && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {draft.product_gaps.map((g: string) => (
+            {draft.product_gaps!.map((g: string) => (
               <span
                 key={g}
                 className="chip bg-[#e8f0fe] text-[#1a73e8] border-[#c5d8fd]"
@@ -393,7 +393,7 @@ function NbaItem({
     category: string;
     title: string;
     rationale: string;
-    suggested_script?: string;
+    suggested_script?: string | null;
   };
   index: number;
 }) {

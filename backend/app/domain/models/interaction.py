@@ -1,14 +1,14 @@
 """Customer interaction and sentiment domain models."""
+
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class InteractionSource(str, Enum):
+class InteractionSource(StrEnum):
     CALL_TRANSCRIPT = "call_transcript"
     EMAIL = "email"
     COMPLAINT = "complaint"
@@ -18,7 +18,7 @@ class InteractionSource(str, Enum):
     BRANCH_NOTE = "branch_note"
 
 
-class SentimentLabel(str, Enum):
+class SentimentLabel(StrEnum):
     VERY_POSITIVE = "very_positive"
     POSITIVE = "positive"
     NEUTRAL = "neutral"
@@ -26,7 +26,7 @@ class SentimentLabel(str, Enum):
     VERY_NEGATIVE = "very_negative"
 
 
-class UrgencyLevel(str, Enum):
+class UrgencyLevel(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -40,8 +40,8 @@ class Interaction(BaseModel):
     customer_id: str
     source: InteractionSource
     content: str  # transcript text, email body, complaint text, etc.
-    agent_id: Optional[str] = None  # branch rep or call agent handling the interaction
-    branch_id: Optional[str] = None
+    agent_id: str | None = None  # branch rep or call agent handling the interaction
+    branch_id: str | None = None
     channel_metadata: dict = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -64,7 +64,7 @@ class InteractionAnalysis(BaseModel):
     escalation_recommended: bool = False
     summary: str = ""
     entities_mentioned: list[str] = Field(default_factory=list)
-    linked_case_id: Optional[str] = None
+    linked_case_id: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -79,7 +79,7 @@ class CustomerSignal(BaseModel):
     recent_drivers: list[str] = Field(default_factory=list)
     churn_risk: float = 0.0
     open_complaint_count: int = 0
-    last_interaction_at: Optional[datetime] = None
+    last_interaction_at: datetime | None = None
     suppress_cross_sell: bool = False
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

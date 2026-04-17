@@ -1,15 +1,15 @@
 """Unit tests for domain model validation and business logic."""
-import pytest
+
 from datetime import datetime
 
-from app.domain.models.fraud import FraudRiskLevel, FraudAlert, FraudStatus
-from app.domain.models.fraud import RecommendedAction
+import pytest
+from pydantic import ValidationError
+
+from app.core.ids import new_audit_id
+from app.domain.models.audit import AuditAction, AuditActor, AuditEvent
 from app.domain.models.customer import CustomerProfile, KYCStatus, RiskTolerance
-from app.domain.models.loan import LoanApplication, LoanReview, LoanStatus
-from app.domain.models.audit import AuditEvent, AuditActor, AuditAction
-from app.domain.models.interaction import InteractionAnalysis, SentimentLabel, UrgencyLevel
-from app.domain.models.interaction import InteractionSource
-from app.core.ids import new_fraud_id, new_audit_id
+from app.domain.models.fraud import FraudAlert, FraudRiskLevel, FraudStatus, RecommendedAction
+from app.domain.models.loan import LoanReview
 
 
 class TestFraudRiskLevel:
@@ -48,7 +48,7 @@ class TestFraudAlert:
         assert alert.status == FraudStatus.PENDING_ANALYST_REVIEW
 
     def test_risk_score_bounds(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             FraudAlert(
                 alert_id="X",
                 txn_id="X",
@@ -70,7 +70,7 @@ class TestCustomerProfile:
         assert profile.products == []
 
     def test_churn_risk_bounds(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             CustomerProfile(
                 customer_id="C-001",
                 name="X",
@@ -88,7 +88,7 @@ class TestAuditEvent:
             related_object_id="FRAUD-001",
             related_object_type="fraud_alert",
         )
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             event.actor_id = "modified"  # AuditEvent is frozen
 
     def test_has_timestamp(self):
@@ -116,7 +116,7 @@ class TestLoanReview:
         assert review.underwriter_id is None
 
     def test_confidence_score_bounds(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             LoanReview(
                 review_id="R",
                 application_id="L",

@@ -5,15 +5,16 @@ Inputs:  BranchKPI snapshots, complaint analyses, fraud-flagged transactions
 Outputs: BranchInsight with anomaly cards, root-cause hypotheses, recommendations
 Gate:    Branch/regional manager review
 """
+
 from __future__ import annotations
 
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from app.core.ids import new_audit_id, new_branch_insight_id, new_id, new_session_id
 from app.domain.models import BranchAlert, BranchInsight
+from app.domain.models.audit import AuditAction
 from app.domain.models.branch import BranchAlertSeverity
 from app.infrastructure.ai.interfaces import LLMService, Message, RetrievalService
 from app.infrastructure.persistence.interfaces import (
@@ -23,6 +24,7 @@ from app.infrastructure.persistence.interfaces import (
     TraceRepository,
     TransactionRepository,
 )
+
 from .base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -65,8 +67,8 @@ class BranchAgent(BaseAgent):
         self._transactions = transaction_repo
 
     async def analyze_branch(
-        self, branch_id: str, session_id: Optional[str] = None
-    ) -> Optional[BranchInsight]:
+        self, branch_id: str, session_id: str | None = None
+    ) -> BranchInsight | None:
         """
         Run anomaly analysis on a branch using recent KPIs and correlated signals.
         Returns None if no anomaly is detected.
@@ -87,8 +89,9 @@ class BranchAgent(BaseAgent):
             return None
 
         # 3. Get complaint analyses for this branch
-        branch_interactions = await self._interactions.get_interactions_by_customer(
-            branch_id, limit=20  # branch_id used as a proxy filter here
+        await self._interactions.get_interactions_by_customer(
+            branch_id,
+            limit=20,  # branch_id used as a proxy filter here
         )
 
         # 4. Get fraud-flagged transactions
@@ -97,14 +100,12 @@ class BranchAgent(BaseAgent):
 
         # 5. Retrieve ops best-practice context
         policy_ctx = await self._retrieve_context(
-            f"branch performance improvement staffing complaints",
+            "branch performance improvement staffing complaints",
             collection="branch_policies",
         )
 
         # 6. Build prompt
-        context = self._build_prompt(
-            branch_id, recent_kpis, anomaly_flags, fraud_txns, policy_ctx
-        )
+        context = self._build_prompt(branch_id, recent_kpis, anomaly_flags, fraud_txns, policy_ctx)
         messages = [
             Message(role="system", content=BRANCH_SYSTEM_PROMPT),
             Message(role="user", content=context),
@@ -146,7 +147,7 @@ class BranchAgent(BaseAgent):
         # 11. Audit
         await self._emit_audit(
             event_id=new_audit_id(),
-            action="branch_insight_created",
+            action=AuditAction.BRANCH_INSIGHT_CREATED,
             actor_id=self.name,
             related_object_id=insight.insight_id,
             related_object_type="branch_insight",
@@ -158,23 +159,22 @@ class BranchAgent(BaseAgent):
 
     def _detect_anomalies(self, kpis: list) -> list[str]:
         """Simple deterministic checks — supplement LLM analysis."""
-        flags = []
+        flags: list[str] = []
         if len(kpis) < 2:
             return flags
         latest = kpis[0]
-        prev_avg_wait = sum(k.avg_wait_time_minutes or 0 for k in kpis[1:]) / max(
-            len(kpis) - 1, 1
-        )
-        if latest.avg_wait_time_minutes and prev_avg_wait > 0:
-            if latest.avg_wait_time_minutes > prev_avg_wait * 1.4:
-                flags.append("wait_time_spike")
+        prev_avg_wait = sum(k.avg_wait_time_minutes or 0 for k in kpis[1:]) / max(len(kpis) - 1, 1)
+        if (
+            latest.avg_wait_time_minutes
+            and prev_avg_wait > 0
+            and latest.avg_wait_time_minutes > prev_avg_wait * 1.4
+        ):
+            flags.append("wait_time_spike")
         if latest.complaint_count > 5:
             flags.append("complaint_surge")
         if latest.scheduled_staff > 0 and latest.actual_staff < latest.scheduled_staff * 0.8:
             flags.append("staffing_gap")
-        prev_avg_accounts = sum(k.new_accounts_opened for k in kpis[1:]) / max(
-            len(kpis) - 1, 1
-        )
+        prev_avg_accounts = sum(k.new_accounts_opened for k in kpis[1:]) / max(len(kpis) - 1, 1)
         if prev_avg_accounts > 0 and latest.new_accounts_opened < prev_avg_accounts * 0.6:
             flags.append("sales_decline")
         return flags
