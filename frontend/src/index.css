@@ -1,0 +1,188 @@
+/* ── Google Material Design 3 inspired global styles ─────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* MD3 Color tokens */
+  --md-primary:         #1a73e8;
+  --md-primary-light:   #e8f0fe;
+  --md-primary-dark:    #1557b0;
+  --md-secondary:       #34a853;
+  --md-error:           #ea4335;
+  --md-warning:         #fbbc04;
+  --md-surface:         #ffffff;
+  --md-surface-variant: #f8f9fa;
+  --md-on-surface:      #202124;
+  --md-on-surface-2:    #5f6368;
+  --md-outline:         #dadce0;
+  --md-outline-variant: #e8eaed;
+
+  /* Elevation shadows (MD3) */
+  --elevation-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+  --elevation-2: 0 1px 2px rgba(60,64,67,.3), 0 2px 6px 2px rgba(60,64,67,.15);
+  --elevation-3: 0 4px 8px 3px rgba(60,64,67,.15), 0 1px 3px rgba(60,64,67,.3);
+  --elevation-4: 0 6px 10px 4px rgba(60,64,67,.15), 0 2px 3px rgba(60,64,67,.3);
+
+  /* Transitions */
+  --motion-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-duration: 200ms;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: 'Roboto', -apple-system, sans-serif;
+    background: #f1f3f4;
+    color: var(--md-on-surface);
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* ── Cards ──────────────────────────────────────────────────────────── */
+  .md-card {
+    @apply bg-white rounded-2xl;
+    box-shadow: var(--elevation-1);
+    transition: box-shadow var(--motion-duration) var(--motion-standard);
+  }
+  .md-card:hover { box-shadow: var(--elevation-2); }
+  .md-card-flat {
+    @apply bg-white rounded-2xl border border-[var(--md-outline-variant)];
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  .btn-filled {
+    @apply inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium text-white
+           transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1;
+    background: var(--md-primary);
+    box-shadow: var(--elevation-1);
+    focus-ring-color: var(--md-primary);
+  }
+  .btn-filled:hover { filter: brightness(1.08); box-shadow: var(--elevation-2); }
+  .btn-filled:disabled { @apply opacity-40 cursor-not-allowed; box-shadow: none; }
+
+  .btn-tonal {
+    @apply inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium
+           transition-all duration-200;
+    background: var(--md-primary-light);
+    color: var(--md-primary);
+  }
+  .btn-tonal:hover { filter: brightness(0.96); }
+
+  .btn-outlined {
+    @apply inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium
+           border transition-all duration-200;
+    border-color: var(--md-outline);
+    color: var(--md-primary);
+  }
+  .btn-outlined:hover { background: var(--md-primary-light); }
+
+  .btn-text {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+           transition-all duration-200;
+    color: var(--md-primary);
+  }
+  .btn-text:hover { background: var(--md-primary-light); }
+
+  /* ── Chips ───────────────────────────────────────────────────────────── */
+  .chip {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium;
+    border: 1px solid var(--md-outline);
+    background: var(--md-surface);
+  }
+  .chip-filled {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  /* ── Risk chips ─────────────────────────────────────────────────────── */
+  .risk-low      { @apply chip-filled bg-[#e6f4ea] text-[#137333]; }
+  .risk-medium   { @apply chip-filled bg-[#fef7e0] text-[#b06000]; }
+  .risk-high     { @apply chip-filled bg-[#fce8e6] text-[#c5221f]; }
+  .risk-critical { @apply chip-filled bg-[#c5221f] text-white; }
+
+  /* ── Inputs ──────────────────────────────────────────────────────────── */
+  .md-input {
+    @apply w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all;
+    border: 1px solid var(--md-outline);
+    background: var(--md-surface-variant);
+  }
+  .md-input:focus {
+    border-color: var(--md-primary);
+    background: white;
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
+  }
+
+  /* ── Nav rail item ───────────────────────────────────────────────────── */
+  .nav-item {
+    @apply flex flex-col items-center gap-1 py-2 px-4 rounded-2xl text-xs font-medium cursor-pointer
+           transition-all duration-200 select-none;
+    color: var(--md-on-surface-2);
+    min-width: 56px;
+  }
+  .nav-item:hover { background: rgba(26,115,232,0.08); color: var(--md-primary); }
+  .nav-item.active {
+    background: var(--md-primary-light);
+    color: var(--md-primary);
+  }
+  .nav-item .nav-icon {
+    @apply w-6 h-6 flex items-center justify-center text-base;
+  }
+
+  /* ── Table ───────────────────────────────────────────────────────────── */
+  .md-table { @apply w-full text-sm; }
+  .md-table thead tr {
+    @apply border-b;
+    border-color: var(--md-outline-variant);
+  }
+  .md-table thead th {
+    @apply px-4 py-3 text-left text-xs font-medium uppercase tracking-wider;
+    color: var(--md-on-surface-2);
+  }
+  .md-table tbody tr {
+    @apply border-b transition-colors duration-100 cursor-pointer;
+    border-color: var(--md-outline-variant);
+  }
+  .md-table tbody tr:hover { background: var(--md-surface-variant); }
+  .md-table tbody td { @apply px-4 py-3; }
+
+  /* ── Chat bubble ─────────────────────────────────────────────────────── */
+  .chat-bubble-user {
+    @apply self-end max-w-[78%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm leading-relaxed;
+    background: var(--md-primary);
+    color: white;
+  }
+  .chat-bubble-agent {
+    @apply self-start max-w-[78%] px-4 py-2.5 rounded-2xl rounded-bl-md text-sm leading-relaxed;
+    background: white;
+    color: var(--md-on-surface);
+    box-shadow: var(--elevation-1);
+  }
+  .chat-bubble-agent.thinking {
+    @apply opacity-70 italic;
+    background: var(--md-surface-variant);
+  }
+
+  /* ── Status pills ─────────────────────────────────────────────────────── */
+  .status-pill {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  /* ── Scrollbar ───────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full; background: var(--md-outline); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--md-on-surface-2); }
+}

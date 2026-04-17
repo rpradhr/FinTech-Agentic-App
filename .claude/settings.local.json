@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(python -c ':*)",
+      "Bash(.venv/bin/python -c ':*)",
+      "Bash(.venv/bin/python -m pytest --collect-only -q)",
+      "Bash(.venv/bin/python -m pytest -x -q)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_agent_audit_trail.py -x -q)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_api_fraud.py tests/unit/ -q)",
+      "Bash(.venv/bin/pip show *)",
+      "Bash(.venv/bin/python -m pytest tests/unit/ tests/integration/ -q --no-header)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_api_fraud.py::TestFraudAPI::test_list_alerts_requires_auth -v)",
+      "Bash(.venv/bin/python -m pytest tests/unit/test_chat_classifier.py -q --no-header)",
+      "Bash(.venv/bin/python -c \"from app.api.routers.chat import _keyword_classify; print\\(_keyword_classify\\('underwriting queue'\\)\\); print\\(_keyword_classify\\('staffing gap alert'\\)\\)\")",
+      "Bash(.venv/bin/python -m pytest tests/unit/test_chat_handlers.py -q --no-header)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_chat_router.py -q --no-header)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_chat_pipeline.py -q --no-header)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_chat_pipeline.py::TestLoanPipeline::test_nonexistent_application_handled -v)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_chat_pipeline.py::TestLoanPipeline::test_existing_review_returned_with_all_cards -v)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_chat_e2e.py -q --no-header)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_chat_e2e.py::TestFraudAnalystScenario::test_turn2_customer_drill_down -v)",
+      "Bash(.venv/bin/python -m pytest -q --no-header)",
+      "Bash(.venv/bin/python -m pytest -v --no-header)",
+      "Bash(git init *)",
+      "Bash(git config *)"
+    ]
+  }
+}

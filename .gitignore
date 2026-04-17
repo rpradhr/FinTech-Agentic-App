@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyo
+*.pyd
+.python-version
+venv/
+.venv/
+env/
+.env
+*.env
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Secrets / credentials
+*.pem
+*.key
+*.cert
+secrets/
+.secrets
+
+# Test artifacts
+.coverage
+htmlcov/
+junit*.xml
+test-results/
+
+# Docker
+.docker/
+
+# Compiled / generated
+*.pyc
+*.js.map
